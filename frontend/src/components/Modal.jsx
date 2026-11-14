@@ -1,3 +1,5 @@
+import { NavIcon } from './Icons'
+
 /**
  * Komponen Modal Dialog Reusable untuk Formulir & Detail Data
  */
@@ -25,7 +27,7 @@ export default function Modal({
             onClick={onClose}
             aria-label="Tutup dialog"
           >
-            ✕
+            <NavIcon name="close" size={18} />
           </button>
         </div>
         <div className="modal-body">{children}</div>

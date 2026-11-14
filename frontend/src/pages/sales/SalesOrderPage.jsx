@@ -31,19 +31,11 @@ import {
 } from '../../utils/formatters'
 
 const SEGMENT_LABELS = {
-  KONSUMEN: 'Konsumen Langsung (Eceran)',
+  KONSUMEN: 'Konsumen Langsung',
   RETAIL: 'Retail (Toko & Warung)',
   PASAR_MODERN: 'Pasar Modern (Supermarket)',
 }
 
-/**
- * Layar Sales Order, Price Tiering & Alokasi FIFO (Screen ID: UI-SLS-01 — Fitur 5 Tugas Rani)
- * Spesifikasi SDD & URS:
- * - Pilihan segmen (Konsumen Langsung / Retail / Pasar Modern) mengubah harga satuan otomatis & terkunci (read-only)
- * - Tabel alokasi batch FIFO diurutkan dari tanggal masuk/sortasi tertua
- * - Validasi real-time: jumlah pesanan tidak boleh melebihi stok tersedia (URS-SLS-004)
- * - Tombol "Konfirmasi Pesanan" & tombol placeholder "Cetak Surat Jalan"
- */
 export default function SalesOrderPage() {
   const { hasPermission } = useAuth()
   const canCreateOrder = hasPermission(['sales:order'])
@@ -57,7 +49,6 @@ export default function SalesOrderPage() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // State Form Pembuatan Sales Order (UI-SLS-01)
   const [selectedSegment, setSelectedSegment] = useState('RETAIL')
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
   const [orderDate, setOrderDate] = useState(todayISODate())
@@ -69,7 +60,6 @@ export default function SalesOrderPage() {
   const [banner, setBanner] = useState({ type: 'info', text: '' })
   const [submitting, setSubmitting] = useState(false)
 
-  // Modal Preview Cetak Surat Jalan (Placeholder bagian Amel - URS-SLS-007)
   const [printPreviewOrder, setPrintPreviewOrder] = useState(null)
 
   const loadSalesData = async () => {
@@ -99,11 +89,12 @@ export default function SalesOrderPage() {
       setLots(lotList || [])
       setOrders(orderList || [])
 
-      // Pastikan setiap baris memilih grade non-reject pertama (Grade A) sesuai ID database
       const allGrades = Object.values(gMap)
       setLines((prev) =>
         prev.map((ln) => {
-          const prod = (prodList || []).find((p) => Number(p.id) === Number(ln.product_id)) || (prodList || [])[0]
+          const prod =
+            (prodList || []).find((p) => Number(p.id) === Number(ln.product_id)) ||
+            (prodList || [])[0]
           const validGrades = allGrades
             .filter((g) => prod && g.category_id === prod.category_id && !g.is_reject)
             .sort((a, b) => (a.sort_order ?? 99) - (b.sort_order ?? 99))
@@ -116,7 +107,6 @@ export default function SalesOrderPage() {
         })
       )
 
-      // Pilih pelanggan pertama yang sesuai segmen default bila belum dipilih
       if (!selectedCustomerId && custList?.length > 0) {
         const defaultCust =
           custList.find((c) => c.segment === selectedSegment) || custList[0]
@@ -126,7 +116,7 @@ export default function SalesOrderPage() {
     } catch (err) {
       setBanner({
         type: 'danger',
-        text: err.message || 'Gagal memuat data penjualan dan stok FIFO.',
+        text: err.message || 'Gagal memuat data penjualan dan stok gudang.',
       })
     } finally {
       setLoading(false)
@@ -139,7 +129,6 @@ export default function SalesOrderPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Pelanggan aktif & segmen terkunci
   const activeCustomer = useMemo(
     () => customers.find((c) => String(c.id) === String(selectedCustomerId)) || null,
     [customers, selectedCustomerId]
@@ -163,7 +152,6 @@ export default function SalesOrderPage() {
     }
   }
 
-  // Kalkulasi baris pesanan: harga satuan terkunci otomatis + simulasi alokasi batch FIFO
   const computedLines = useMemo(() => {
     return lines.map((ln, index) => {
       const product = products.find((p) => Number(p.id) === Number(ln.product_id))
@@ -251,8 +239,7 @@ export default function SalesOrderPage() {
     )
   }
 
-  // Preset simulasi UAT-08 (Cabai Grade A 700 kg + Grade B 200 kg ke Retail)
-  const applyUat08Preset = () => {
+  const applySamplePreset = () => {
     const retailCust = customers.find((c) => c.segment === 'RETAIL')
     if (retailCust) {
       setSelectedCustomerId(String(retailCust.id))
@@ -266,7 +253,7 @@ export default function SalesOrderPage() {
     const gradeB = Object.values(gradesMap).find(
       (g) => g.category_id === cabaiCatId && g.code === 'B'
     )
-    setOrderNote('Simulasi UAT-08: Pesanan Cabai Grade A (700 kg) & Grade B (200 kg)')
+    setOrderNote('Pesanan Cabai Grade A (700 kg) dan Grade B (200 kg)')
     setLines([
       {
         product_id: cabaiProd ? cabaiProd.id : 1,
@@ -284,97 +271,94 @@ export default function SalesOrderPage() {
   const handleConfirmOrder = async (e) => {
     e.preventDefault()
     if (!selectedCustomerId) {
-      setBanner({ type: 'danger', text: 'Harap pilih pelanggan terlebih dahulu.' })
+      setBanner({ type: 'danger', text: 'Silakan pilih pelanggan terlebih dahulu.' })
       return
     }
     if (hasStockError) {
       setBanner({
         type: 'danger',
-        text: 'Pesanan ditolak: Terdapat baris pesanan dengan kuantitas melebihi stok tersedia atau tidak valid (URS-SLS-004).',
+        text: 'Pesanan tidak dapat diproses karena jumlah melebihi stok yang tersedia.',
       })
       return
     }
 
     setSubmitting(true)
     try {
-      const created = await createSalesOrderApi({
+      const payload = {
         customer_id: Number(selectedCustomerId),
         order_date: orderDate,
         note: orderNote.trim() || null,
-        lines: computedLines.map((l) => ({
-          product_id: Number(l.product_id),
-          grade_id: Number(l.grade_id),
-          qty: Number(l.qtyNum),
+        lines: computedLines.map((ln) => ({
+          product_id: Number(ln.product_id),
+          grade_id: Number(ln.grade_id),
+          qty: Number(ln.qtyNum),
         })),
-      })
+      }
 
+      const created = await createSalesOrderApi(payload)
       setBanner({
         type: 'success',
-        text: `Sales Order ${created.so_no} berhasil dikonfirmasi! Harga segmen ${created.segment} telah dikunci dan stok batch tertua (FIFO) berhasil direservasi.`,
+        text: `Pesanan penjualan ${created.so_no} berhasil dikonfirmasi dengan total ${formatRupiah(
+          created.total
+        )}.`,
       })
       setOrderNote('')
+      setLines([{ product_id: 1, grade_id: 1, qty: '150' }])
       loadSalesData()
     } catch (err) {
       setBanner({
         type: 'danger',
-        text: err.message || 'Gagal mengonfirmasi Sales Order.',
+        text: err.message || 'Gagal mengonfirmasi pesanan penjualan.',
       })
     } finally {
       setSubmitting(false)
     }
   }
 
-  const handleShipOrder = async (so) => {
+  const handleShipOrder = async (order) => {
     try {
-      const res = await shipSalesOrderApi(so.id, {
+      const res = await shipSalesOrderApi(order.id, {
         auto_invoice: true,
-        vehicle_type: 'Truk Box Pendingin',
-        distance_km: 25,
+        distance_km: 20,
+        vehicle_type: 'PICKUP',
       })
       setBanner({
         type: 'success',
-        text: `Pengiriman berhasil! Surat Jalan ${res.delivery_order?.do_no} dan Faktur Penjualan ${res.invoice?.invoice_no} telah diterbitkan. Stok gudang berkurang sesuai FIFO.`,
+        text: `Pengiriman dikonfirmasi. Surat Jalan ${res.delivery_order?.do_no} dan Faktur ${res.invoice?.invoice_no} telah diterbitkan.`,
       })
       loadSalesData()
     } catch (err) {
-      setBanner({ type: 'danger', text: err.message || 'Gagal memproses pengiriman SO.' })
+      setBanner({ type: 'danger', text: err.message || 'Gagal memproses pengiriman.' })
     }
   }
 
-  const handleCancelOrder = async (so) => {
+  const handleCancelOrder = async (order) => {
     try {
-      await cancelSalesOrderApi(so.id)
+      await cancelSalesOrderApi(order.id)
       setBanner({
         type: 'warning',
-        text: `Sales Order ${so.so_no} telah dibatalkan dan reservasi stok dikembalikan ke batch asal.`,
+        text: `Pesanan ${order.so_no} dibatalkan dan reservasi stok dikembalikan ke gudang.`,
       })
       loadSalesData()
     } catch (err) {
-      setBanner({ type: 'danger', text: err.message || 'Gagal membatalkan SO.' })
+      setBanner({ type: 'danger', text: err.message || 'Gagal membatalkan pesanan.' })
     }
   }
 
   return (
     <div>
-      {/* Header Layar UI-SLS-01 */}
       <div className="page-header">
         <div>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-            <Badge variant="navy">Screen ID: UI-SLS-01</Badge>
-            <Badge variant="green">Fitur 5 — Sales, Price Tiering &amp; Alokasi FIFO</Badge>
-            <Badge variant="amber">URS-SLS-001 s.d. 007 &amp; UAT-08</Badge>
-          </div>
-          <h1 className="page-title">Pesanan Penjualan (Sales Order) &amp; Alokasi Batch FIFO</h1>
+          <h1 className="page-title">Pesanan Penjualan &amp; Alokasi Stok FIFO</h1>
           <p className="page-subtitle">
-            Harga jual satuan otomatis terkunci berdasarkan segmen pelanggan (
-            <strong>Konsumen Langsung / Retail / Pasar Modern</strong>) dan pengeluaran barang jadi
-            wajib memprioritaskan batch tertua (<strong>First-In, First-Out</strong>).
+            Buat pesanan penjualan dengan harga satuan otomatis sesuai segmen pelanggan dan
+            alokasi stok berdasarkan urutan batch tertua.
           </p>
         </div>
 
         {canCreateOrder && (
-          <Button variant="outline" size="sm" onClick={applyUat08Preset}>
-            Isi Skenario Uji UAT-08 (Cabai 700kg A + 200kg B)
+          <Button variant="outline" size="sm" onClick={applySamplePreset}>
+            Isi Contoh Pesanan Cabai
           </Button>
         )}
       </div>
@@ -386,17 +370,14 @@ export default function SalesOrderPage() {
         {banner.text}
       </AlertBanner>
 
-      {/* BAGIAN 1: FORMULIR PEMBUATAN SALES ORDER & PREVIEW ALOKASI FIFO */}
       {canCreateOrder && (
         <div className="card" style={{ marginBottom: '24px' }}>
           <div className="card-header">
             <div>
-              <h2 className="card-title">
-                1. Formulir Pembuatan Sales Order Baru (Price Tiering Otomatis)
-              </h2>
+              <h2 className="card-title">Formulir Pesanan Penjualan Baru</h2>
               <p className="card-subtitle">
-                Pilih segmen pasar atau pelanggan komersial. Kolom harga satuan dikunci otomatis
-                (read-only) untuk mencegah kesalahan input harga di lapangan.
+                Pilih segmen dan pelanggan. Harga satuan terkunci otomatis mengikuti daftar harga
+                segmen.
               </p>
             </div>
             <Badge
@@ -408,57 +389,55 @@ export default function SalesOrderPage() {
                     : 'amber'
               }
             >
-              Segmen Harga Aktif: {SEGMENT_LABELS[effectiveSegment] || effectiveSegment}
+              Segmen: {SEGMENT_LABELS[effectiveSegment] || effectiveSegment}
             </Badge>
           </div>
 
           <form onSubmit={handleConfirmOrder}>
-            {/* Baris Atas: Pilihan Segmen, Pelanggan, Tanggal */}
             <div className="form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '20px' }}>
               <FormField
-                label="Pilihan Segmen Pasar (Price Tier)"
+                label="Segmen Pelanggan"
                 name="segment_selector"
                 type="select"
                 value={effectiveSegment}
                 onChange={(e) => handleSegmentChange(e.target.value)}
                 options={[
-                  { value: 'KONSUMEN', label: 'Konsumen Langsung (Harga Eceran)' },
-                  { value: 'RETAIL', label: 'Retail — Toko & Warung (Harga Menengah)' },
-                  { value: 'PASAR_MODERN', label: 'Pasar Modern — Supermarket (Harga Kontrak)' },
+                  { value: 'KONSUMEN', label: 'Konsumen Langsung (Eceran)' },
+                  { value: 'RETAIL', label: 'Retail (Toko & Warung)' },
+                  { value: 'PASAR_MODERN', label: 'Pasar Modern (Supermarket)' },
                 ]}
-                hint="Mengubah segmen akan memperbarui harga satuan secara otomatis."
+                hint="Menentukan harga jual satuan secara otomatis."
               />
 
               <FormField
-                label="Pelanggan / Mitra Pembeli"
+                label="Nama Pelanggan"
                 name="customer_id"
                 type="select"
                 value={selectedCustomerId}
                 onChange={(e) => handleCustomerChange(e.target.value)}
                 options={customers.map((c) => ({
                   value: String(c.id),
-                  label: `${c.code} — ${c.name} [${c.segment}]`,
+                  label: `${c.code} - ${c.name} (${c.segment})`,
                 }))}
                 required
                 hint={
                   activeCustomer
-                    ? `Alamat: ${activeCustomer.address || '-'} | TOP: ${activeCustomer.payment_term_days} hari`
+                    ? `Alamat: ${activeCustomer.address || '-'} | Termin: ${activeCustomer.payment_term_days} hari`
                     : 'Pilih pelanggan terdaftar'
                 }
               />
 
               <FormField
-                label="Tanggal Pesanan (Order Date)"
+                label="Tanggal Pesanan"
                 name="order_date"
                 type="date"
                 value={orderDate}
                 onChange={(e) => setOrderDate(e.target.value)}
                 required
-                hint={`Format tampilan: ${formatDateID(orderDate)}`}
+                hint={`Tanggal: ${formatDateID(orderDate)}`}
               />
             </div>
 
-            {/* Baris Item Produk & Harga Terkunci */}
             <div style={{ marginBottom: '20px' }}>
               <div
                 style={{
@@ -469,10 +448,10 @@ export default function SalesOrderPage() {
                 }}
               >
                 <h3 style={{ fontSize: '15.5px' }}>
-                  Rincian Item Komoditas &amp; Kuncian Harga Segmen ({effectiveSegment})
+                  Rincian Barang Pesanan
                 </h3>
                 <Button type="button" variant="outline" size="sm" onClick={handleAddLine}>
-                  + Tambah Baris Komoditas
+                  + Tambah Baris Barang
                 </Button>
               </div>
 
@@ -480,11 +459,11 @@ export default function SalesOrderPage() {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '24%' }}>Komoditas Produk</th>
-                      <th style={{ width: '18%' }}>Kelas Mutu (Grade)</th>
+                      <th style={{ width: '24%' }}>Komoditas</th>
+                      <th style={{ width: '18%' }}>Grade Mutu</th>
                       <th style={{ width: '15%' }}>Stok Tersedia</th>
-                      <th style={{ width: '15%' }}>Kuantitas Pesan (kg)</th>
-                      <th style={{ width: '15%' }}>Harga Satuan (Terkunci)</th>
+                      <th style={{ width: '15%' }}>Jumlah Pesan (kg)</th>
+                      <th style={{ width: '15%' }}>Harga Satuan</th>
                       <th style={{ width: '13%' }}>Subtotal</th>
                       <th>Aksi</th>
                     </tr>
@@ -504,7 +483,7 @@ export default function SalesOrderPage() {
                             >
                               {products.map((p) => (
                                 <option key={p.id} value={p.id}>
-                                  {p.code} — {p.name}
+                                  {p.code} - {p.name}
                                 </option>
                               ))}
                             </select>
@@ -542,7 +521,7 @@ export default function SalesOrderPage() {
                             />
                             {overStock && (
                               <div className="form-error" style={{ marginTop: '4px' }}>
-                                Melebihi stok! Kurang {formatKg(ln.fifo.shortfall)} (URS-SLS-004)
+                                Melebihi stok tersedia (kurang {formatKg(ln.fifo.shortfall)})
                               </div>
                             )}
                           </td>
@@ -556,7 +535,7 @@ export default function SalesOrderPage() {
                                   ? `${formatRupiah(ln.lockedUnitPrice)} / kg`
                                   : 'Belum Diatur'
                               }
-                              title="Harga satuan dikunci otomatis berdasarkan segmen pelanggan"
+                              title="Harga satuan terkunci otomatis mengikuti segmen pelanggan"
                             />
                           </td>
                           <td>
@@ -582,7 +561,6 @@ export default function SalesOrderPage() {
               </div>
             </div>
 
-            {/* Tabel Alokasi Batch FIFO Otomatis (Urut Tanggal Tertua) */}
             <div
               style={{
                 backgroundColor: 'var(--bg-muted)',
@@ -604,14 +582,14 @@ export default function SalesOrderPage() {
               >
                 <div>
                   <h3 style={{ fontSize: '15.5px' }}>
-                    Tabel Alokasi Stok Batch Otomatis — Prinsip FIFO (First-In, First-Out)
+                    Alokasi Stok Batch FIFO (First-In, First-Out)
                   </h3>
                   <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    Sistem mengurutkan batch barang jadi dari <strong>tanggal masuk/sortasi tertua</strong>{' '}
-                    terlebih dahulu (<code>SDD 5.2.5.1.1 AllocateBatchFIFO</code>).
+                    Stok barang jadi dialokasikan otomatis mulai dari tanggal masuk atau sortasi
+                    paling awal.
                   </p>
                 </div>
-                <Badge variant="navy">Rotasi Otomatis: Batch Tertua Lebih Dulu</Badge>
+                <Badge variant="navy">Prioritas Batch Tertua</Badge>
               </div>
 
               {computedLines.map((ln) => (
@@ -624,46 +602,46 @@ export default function SalesOrderPage() {
                       color: 'var(--color-navy)',
                     }}
                   >
-                    Alokasi FIFO untuk: {ln.product?.name} — Grade {ln.grade?.code} (Pesanan:{' '}
-                    {formatKg(ln.qtyNum)} | Tersedia: {formatKg(ln.fifo.totalAvailable)})
+                    {ln.product?.name} - Grade {ln.grade?.code} (Pesanan: {formatKg(ln.qtyNum)} |
+                    Stok Tersedia: {formatKg(ln.fifo.totalAvailable)})
                   </div>
                   <Table
                     rowKey="lot_id"
                     data={ln.fifo.allocations}
-                    emptyMessage="Tidak ada stok batch tersedia untuk produk dan grade ini."
+                    emptyMessage="Tidak ada stok batch tersedia untuk komoditas dan grade ini."
                     columns={[
                       {
                         key: 'order_idx',
-                        header: 'Urutan FIFO',
+                        header: 'Urutan Prioritas',
                         render: (_, idx) => (
                           <Badge variant={idx === 0 ? 'green' : 'navy'}>
-                            Prioritas #{idx + 1} {idx === 0 ? '(Batch Tertua)' : ''}
+                            Batch #{idx + 1} {idx === 0 ? '(Tertua)' : ''}
                           </Badge>
                         ),
                       },
                       {
                         key: 'batch_code',
-                        header: 'Nomor Batch Produk Jadi',
+                        header: 'Nomor Batch',
                         render: (r) => <strong>{r.batch_code}</strong>,
                       },
                       {
                         key: 'received_at',
-                        header: 'Tanggal Masuk / Sortasi',
+                        header: 'Tanggal Masuk',
                         render: (r) => formatDateTimeID(r.received_at),
                       },
                       {
                         key: 'expiry_date',
-                        header: 'Batas Masa Simpan',
+                        header: 'Batas Simpan',
                         render: (r) => formatDateID(r.expiry_date),
                       },
                       {
                         key: 'qty_available',
-                        header: 'Stok Batch Sebelumnya',
+                        header: 'Stok Awal Batch',
                         render: (r) => formatKg(r.qty_available),
                       },
                       {
                         key: 'qty_allocated',
-                        header: 'Dialokasikan ke SO Ini',
+                        header: 'Dialokasikan',
                         render: (r) => (
                           <strong style={{ color: 'var(--color-green)' }}>
                             {formatKg(r.qty_allocated)}
@@ -681,7 +659,6 @@ export default function SalesOrderPage() {
               ))}
             </div>
 
-            {/* Catatan & Ringkasan Total Faktur + Tombol Konfirmasi Pesanan */}
             <div
               style={{
                 display: 'flex',
@@ -693,7 +670,7 @@ export default function SalesOrderPage() {
             >
               <div style={{ flex: 1, minWidth: '280px' }}>
                 <FormField
-                  label="Catatan Pesanan / Instruksi Pengiriman (Opsional)"
+                  label="Catatan Pengiriman (Opsional)"
                   name="note"
                   value={orderNote}
                   onChange={(e) => setOrderNote(e.target.value)}
@@ -714,7 +691,7 @@ export default function SalesOrderPage() {
               >
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-navy)' }}>
-                    TOTAL NILAI PESANAN ({effectiveSegment})
+                    TOTAL PESANAN
                   </div>
                   <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-navy-dark)' }}>
                     {formatRupiah(grandTotal)}
@@ -727,7 +704,7 @@ export default function SalesOrderPage() {
                   size="lg"
                   disabled={submitting || hasStockError}
                 >
-                  {submitting ? 'Memproses Alokasi FIFO...' : 'Konfirmasi Pesanan'}
+                  {submitting ? 'Memproses...' : 'Konfirmasi Pesanan'}
                 </Button>
               </div>
             </div>
@@ -735,19 +712,16 @@ export default function SalesOrderPage() {
         </div>
       )}
 
-      {/* BAGIAN 2: DAFTAR SALES ORDER, PENGIRIMAN (DO/FAKTUR) & CETAK SURAT JALAN */}
       <div className="card">
         <div className="card-header">
           <div>
-            <h2 className="card-title">
-              2. Daftar Pesanan Penjualan (Sales Orders), Surat Jalan (DO) &amp; Faktur
-            </h2>
+            <h2 className="card-title">Daftar Pesanan Penjualan &amp; Pengiriman</h2>
             <p className="card-subtitle">
-              Riwayat pesanan yang telah dikonfirmasi beserta nomor batch FIFO yang dialokasikan.
+              Riwayat pesanan yang telah dikonfirmasi beserta status pengiriman dan faktur.
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={loadSalesData}>
-            Segarkan Daftar SO
+            Muat Ulang
           </Button>
         </div>
 
@@ -755,7 +729,7 @@ export default function SalesOrderPage() {
           rowKey="id"
           loading={loading}
           data={orders}
-          emptyMessage="Belum ada transaksi Sales Order."
+          emptyMessage="Belum ada data pesanan penjualan."
           columns={[
             {
               key: 'so_no',
@@ -776,7 +750,7 @@ export default function SalesOrderPage() {
                 const cust = customers.find((c) => c.id === r.customer_id)
                 return (
                   <div>
-                    <div style={{ fontWeight: 700 }}>
+                    <div style={{ fontWeight: 600 }}>
                       {r.customer_name || cust?.name || `Pelanggan #${r.customer_id}`}
                     </div>
                     <Badge
@@ -796,7 +770,7 @@ export default function SalesOrderPage() {
             },
             {
               key: 'batch_allocations',
-              header: 'Rincian Item & Batch FIFO',
+              header: 'Rincian Barang & Batch',
               render: (r) =>
                 r.lines && r.lines.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -805,7 +779,7 @@ export default function SalesOrderPage() {
                         <strong>
                           {ln.product_name || `Produk #${ln.product_id}`} (Grade {ln.grade_code})
                         </strong>
-                        : {formatKg(ln.qty)} &times; {formatRupiah(ln.unit_price)}
+                        : {formatKg(ln.qty)} x {formatRupiah(ln.unit_price)}
                         {ln.allocations && ln.allocations.length > 0 && (
                           <span style={{ color: 'var(--text-secondary)', marginLeft: '6px' }}>
                             [Batch:{' '}
@@ -817,18 +791,18 @@ export default function SalesOrderPage() {
                   </div>
                 ) : (
                   <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>
-                    {r.note || 'Teralokasi sesuai FIFO'}
+                    {r.note || 'Teralokasi sesuai urutan batch'}
                   </span>
                 ),
             },
             {
               key: 'total',
-              header: 'Total Nilai Faktur',
+              header: 'Total Nilai',
               render: (r) => <strong>{formatRupiah(r.total)}</strong>,
             },
             {
               key: 'status',
-              header: 'Status SO',
+              header: 'Status',
               render: (r) => {
                 const v =
                   r.status === 'SHIPPED'
@@ -841,12 +815,12 @@ export default function SalesOrderPage() {
             },
             {
               key: 'actions',
-              header: 'Aksi & Surat Jalan',
+              header: 'Aksi',
               render: (r) => (
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {r.status === 'CONFIRMED' && canShipOrder && (
                     <Button variant="success" size="sm" onClick={() => handleShipOrder(r)}>
-                      Kirim &amp; Terbitkan DO
+                      Kirim Barang
                     </Button>
                   )}
                   <Button
@@ -854,7 +828,7 @@ export default function SalesOrderPage() {
                     size="sm"
                     onClick={() => setPrintPreviewOrder(r)}
                   >
-                    Cetak Surat Jalan
+                    Surat Jalan
                   </Button>
                   {r.status === 'CONFIRMED' && canCreateOrder && (
                     <Button variant="danger" size="sm" onClick={() => handleCancelOrder(r)}>
@@ -868,14 +842,13 @@ export default function SalesOrderPage() {
         />
       </div>
 
-      {/* Modal Placeholder Cetak Surat Jalan (Delivery Order - URS-SLS-007) */}
       <Modal
         isOpen={Boolean(printPreviewOrder)}
         onClose={() => setPrintPreviewOrder(null)}
         size="lg"
         title={
           printPreviewOrder
-            ? `Pratinjau Cetak Surat Jalan (Delivery Order) — ${printPreviewOrder.do_no || printPreviewOrder.so_no}`
+            ? `Surat Jalan Pengiriman (${printPreviewOrder.do_no || printPreviewOrder.so_no})`
             : 'Surat Jalan'
         }
         footer={
@@ -883,25 +856,14 @@ export default function SalesOrderPage() {
             <Button variant="outline" onClick={() => setPrintPreviewOrder(null)}>
               Tutup
             </Button>
-            <Button
-              variant="primary"
-              onClick={() => window.print()}
-              title="Cetak via dialog printer browser (Placeholder modul PDF Amel)"
-            >
-              Cetak Dokumen (A4 / Thermal)
+            <Button variant="primary" onClick={() => window.print()}>
+              Cetak Surat Jalan
             </Button>
           </>
         }
       >
         {printPreviewOrder && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <AlertBanner variant="info">
-              <strong>Placeholder Modul Cetak PDF (PIC: Amel — URS-SLS-007):</strong> Dokumen
-              pengiriman di bawah ini sudah memuat nomor batch barang jadi yang dialokasikan secara
-              FIFO dan terhubung ke endpoint{' '}
-              <code>GET /api/v1/sales/delivery-orders/&#123;do_id&#125;/pdf</code>.
-            </AlertBanner>
-
             <div
               style={{
                 border: '1px solid var(--border-color)',
@@ -921,10 +883,10 @@ export default function SalesOrderPage() {
               >
                 <div>
                   <h3 style={{ color: 'var(--color-navy)' }}>
-                    SURAT JALAN PENGIRIMAN BARANG (DELIVERY ORDER)
+                    SURAT JALAN PENGIRIMAN BARANG
                   </h3>
                   <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    Koperasi Tani Agribisnis Smart Farming
+                    Koperasi Tani Mandiri Smart Farming
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', fontSize: '13px' }}>
@@ -942,7 +904,7 @@ export default function SalesOrderPage() {
 
               <div style={{ marginBottom: '16px', fontSize: '14px' }}>
                 <div>
-                  <strong>Kepada Pelanggan:</strong>{' '}
+                  <strong>Tujuan Pelanggan:</strong>{' '}
                   {printPreviewOrder.customer_name ||
                     customers.find((c) => c.id === printPreviewOrder.customer_id)?.name}
                 </div>
@@ -954,23 +916,23 @@ export default function SalesOrderPage() {
               <Table
                 rowKey="grade_id"
                 data={printPreviewOrder.lines || []}
-                emptyMessage="Rincian item tercatat pada basis data."
+                emptyMessage="Rincian barang pengiriman tercatat pada sistem."
                 columns={[
-                  { key: 'product_name', header: 'Komoditas Produk' },
+                  { key: 'product_name', header: 'Komoditas' },
                   {
                     key: 'grade_code',
-                    header: 'Grade Mutu',
+                    header: 'Grade',
                     render: (r) => <Badge variant="green">Grade {r.grade_code}</Badge>,
                   },
                   {
                     key: 'batches',
-                    header: 'Nomor Batch FIFO (URS-SLS-007)',
+                    header: 'Nomor Batch FIFO',
                     render: (r) =>
                       (r.allocations || []).map((a) => a.batch_code).join(', ') || '-',
                   },
                   {
                     key: 'qty',
-                    header: 'Kuantitas Kirim',
+                    header: 'Jumlah Kirim',
                     render: (r) => <strong>{formatKg(r.qty)}</strong>,
                   },
                   {
@@ -986,10 +948,10 @@ export default function SalesOrderPage() {
                   marginTop: '16px',
                   textAlign: 'right',
                   fontSize: '16px',
-                  fontWeight: 800,
+                  fontWeight: 700,
                 }}
               >
-                Total Nilai Pengiriman: {formatRupiah(printPreviewOrder.total)}
+                Total Nilai: {formatRupiah(printPreviewOrder.total)}
               </div>
             </div>
           </div>

@@ -1,33 +1,30 @@
 import { hasPermission, hasRole, ROLES } from './roles'
 
 /**
- * Daftar menu navigasi Sidebar dinamis berdasarkan Role & Permission RBAC.
- * Mencakup modul utama Rani (Dashboard, Master Data, Sales Order) serta
- * route modul tim (Caca: Penerimaan, Sortasi, Gudang; Amel: Akuntansi, Laporan & ESG).
+ * Daftar menu navigasi Sidebar dinamis berdasarkan peran pengguna.
  */
 export const MENU_SECTIONS = [
   {
-    section: 'Utama',
+    section: 'Ringkasan',
     items: [
       {
         id: 'dashboard',
-        label: 'Dashboard Utama',
+        label: 'Dashboard',
         path: '/dashboard',
         icon: 'dashboard',
-        permissions: [], // Semua user terautentikasi
+        permissions: [],
       },
     ],
   },
   {
-    section: 'Data Master & Keanggotaan',
+    section: 'Master Data',
     items: [
       {
         id: 'master-members',
-        label: 'Petani Anggota',
+        label: 'Petani & Lahan',
         path: '/master/members',
         icon: 'users',
         permissions: ['member:read', 'member:write'],
-        badge: 'Fitur 1',
       },
       {
         id: 'master-saprotan',
@@ -45,7 +42,7 @@ export const MENU_SECTIONS = [
       },
       {
         id: 'master-customers',
-        label: 'Direktori Pelanggan',
+        label: 'Data Pelanggan',
         path: '/master/customers',
         icon: 'store',
         roles: [
@@ -58,7 +55,7 @@ export const MENU_SECTIONS = [
       },
       {
         id: 'master-pricing',
-        label: 'Produk, Grade & Harga',
+        label: 'Produk & Harga',
         path: '/master/pricing',
         icon: 'tag',
         roles: [
@@ -73,20 +70,19 @@ export const MENU_SECTIONS = [
     ],
   },
   {
-    section: 'Komersial & Distribusi',
+    section: 'Penjualan',
     items: [
       {
         id: 'sales-orders',
-        label: 'Sales Order & FIFO',
+        label: 'Pesanan Penjualan',
         path: '/sales/orders',
         icon: 'cart',
         permissions: ['sales:read', 'sales:order', 'sales:ship'],
-        badge: 'Fitur 5',
       },
     ],
   },
   {
-    section: 'Operasional Gudang & Produksi',
+    section: 'Gudang & Produksi',
     items: [
       {
         id: 'procurement-harvest',
@@ -97,14 +93,14 @@ export const MENU_SECTIONS = [
       },
       {
         id: 'manufacturing-sorting',
-        label: 'Sortasi, Grading & QC',
+        label: 'Sortasi & Grading',
         path: '/manufacturing/sorting',
         icon: 'filter',
         permissions: ['mfg:sort', 'mfg:read', 'mfg:config'],
       },
       {
         id: 'inventory-stock',
-        label: 'Inventaris & Multi-Gudang',
+        label: 'Stok & Inventaris',
         path: '/inventory/stock',
         icon: 'warehouse',
         permissions: ['inventory:read', 'inventory:issue', 'inventory:adjust', 'po:read'],
@@ -112,18 +108,18 @@ export const MENU_SECTIONS = [
     ],
   },
   {
-    section: 'Keuangan & Keberlanjutan',
+    section: 'Keuangan & Laporan',
     items: [
       {
         id: 'accounting-ledger',
-        label: 'Akuntansi & Buku Besar',
+        label: 'Akuntansi & Kas',
         path: '/accounting',
         icon: 'wallet',
         permissions: ['acct:read', 'acct:post', 'acct:payment'],
       },
       {
         id: 'reports-esg',
-        label: 'Laporan & Dashboard ESG',
+        label: 'Laporan & ESG',
         path: '/reports/esg',
         icon: 'leaf',
         permissions: ['report:esg', 'report:operational'],
@@ -133,7 +129,7 @@ export const MENU_SECTIONS = [
 ]
 
 /**
- * Filter daftar menu berdasarkan user yang sedang login
+ * Filter daftar menu berdasarkan pengguna yang sedang login
  */
 export function getMenusForUser(user) {
   if (!user) return []

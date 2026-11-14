@@ -25,7 +25,7 @@ const CUSTOMER_SEGMENTS = [
   },
   {
     value: 'PASAR_MODERN',
-    label: 'Pasar Modern (Supermarket / Hypermart / Kontrak B2B)',
+    label: 'Pasar Modern (Supermarket / Hypermart / Mitra B2B)',
     badgeVariant: 'amber',
   },
 ]
@@ -39,9 +39,6 @@ const INITIAL_FORM = {
   payment_term_days: '14',
 }
 
-/**
- * Halaman Direktori Pelanggan Komersial 3 Segmen (Fitur 1 - URS-SLS-002 & URS-DAT-005)
- */
 export default function CustomersPage() {
   const { hasPermission } = useAuth()
   const canWrite = hasPermission(['master:write', 'sales:order'])
@@ -63,7 +60,7 @@ export default function CustomersPage() {
       const list = await fetchCustomersApi()
       setCustomers(Array.isArray(list) ? list : [])
     } catch (err) {
-      setBanner({ type: 'danger', text: err.message || 'Gagal memuat direktori pelanggan.' })
+      setBanner({ type: 'danger', text: err.message || 'Gagal memuat data pelanggan.' })
     } finally {
       setLoading(false)
     }
@@ -105,12 +102,24 @@ export default function CustomersPage() {
 
   const validate = () => {
     const nextErr = {}
-    if (!form.code.trim()) nextErr.code = 'Kode pelanggan wajib diisi.'
-    if (!form.name.trim()) nextErr.name = 'Nama pelanggan/instansi wajib diisi.'
+    if (!form.code.trim()) {
+      nextErr.code = 'Kode pelanggan wajib diisi.'
+    } else if (
+      !editingCustomer &&
+      customers.some((c) => c.code.toLowerCase() === form.code.trim().toLowerCase())
+    ) {
+      nextErr.code = 'Kode pelanggan sudah digunakan.'
+    }
+
+    if (!form.name.trim()) {
+      nextErr.name = 'Nama pelanggan atau perusahaan wajib diisi.'
+    }
+
     const term = Number(form.payment_term_days)
     if (Number.isNaN(term) || term < 0) {
-      nextErr.payment_term_days = 'Termin pembayaran wajib >= 0 hari.'
+      nextErr.payment_term_days = 'Termin pembayaran tidak boleh bernilai negatif.'
     }
+
     setErrors(nextErr)
     return Object.keys(nextErr).length === 0
   }
@@ -140,13 +149,13 @@ export default function CustomersPage() {
         await createCustomerApi(payload)
         setBanner({
           type: 'success',
-          text: `Pelanggan komersial baru ${payload.code} (${payload.name}) berhasil ditambahkan.`,
+          text: `Pelanggan baru ${payload.code} (${payload.name}) berhasil didaftarkan.`,
         })
       }
       setModalOpen(false)
       loadCustomers()
     } catch (err) {
-      setBanner({ type: 'danger', text: err.message || 'Gagal menyimpan pelanggan.' })
+      setBanner({ type: 'danger', text: err.message || 'Gagal menyimpan data pelanggan.' })
     } finally {
       setSaving(false)
     }
@@ -155,7 +164,7 @@ export default function CustomersPage() {
   const segmentLabel = (seg) => {
     if (seg === 'KONSUMEN') return 'Konsumen Langsung'
     if (seg === 'RETAIL') return 'Retail (Toko/Warung)'
-    if (seg === 'PASAR_MODERN') return 'Pasar Modern (Supermarket)'
+    if (seg === 'PASAR_MODERN') return 'Pasar Modern'
     return seg
   }
 
@@ -167,21 +176,21 @@ export default function CustomersPage() {
 
   const columns = [
     { key: 'code', header: 'Kode Pelanggan', render: (r) => <strong>{r.code}</strong> },
-    { key: 'name', header: 'Nama Pelanggan / Mitra Pembeli' },
+    { key: 'name', header: 'Nama Pelanggan / Mitra' },
     {
       key: 'segment',
-      header: 'Segmen Harga (Price Tier)',
+      header: 'Segmen Harga',
       render: (r) => <Badge variant={segmentVariant(r.segment)}>{segmentLabel(r.segment)}</Badge>,
     },
     { key: 'address', header: 'Alamat Pengiriman', render: (r) => r.address || '-' },
-    { key: 'phone', header: 'Kontak', render: (r) => r.phone || '-' },
+    { key: 'phone', header: 'Telepon', render: (r) => r.phone || '-' },
     {
       key: 'payment_term_days',
-      header: 'Termin Tagihan',
+      header: 'Termin Pembayaran',
       render: (r) =>
         Number(r.payment_term_days) === 0
           ? 'Tunai (0 Hari)'
-          : `TOP ${r.payment_term_days} Hari`,
+          : `${r.payment_term_days} Hari`,
     },
     {
       key: 'actions',
@@ -201,21 +210,16 @@ export default function CustomersPage() {
     <div>
       <div className="page-header">
         <div>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '6px' }}>
-            <Badge variant="navy">Fitur 1 — Direktori Pelanggan</Badge>
-            <Badge variant="green">URS-SLS-002 &amp; URS-DAT-005</Badge>
-          </div>
-          <h1 className="page-title">Direktori Pelanggan Komersial (3 Segmen Pasar)</h1>
+          <h1 className="page-title">Data Pelanggan Komersial</h1>
           <p className="page-subtitle">
-            Pengelompokan pelanggan ke dalam segmen <strong>Konsumen Langsung</strong>,{' '}
-            <strong>Retail</strong>, dan <strong>Pasar Modern</strong> sebagai penentu kuncian
-            harga jual otomatis pada Sales Order.
+            Kelola direktori mitra pembeli berdasarkan segmen Konsumen Langsung, Retail, dan Pasar
+            Modern.
           </p>
         </div>
 
         {canWrite && (
           <Button variant="primary" onClick={openCreateModal}>
-            + Tambah Pelanggan Baru
+            + Tambah Pelanggan
           </Button>
         )}
       </div>
@@ -236,7 +240,7 @@ export default function CustomersPage() {
               value={segmentFilter}
               onChange={(e) => setSegmentFilter(e.target.value)}
             >
-              <option value="">Semua Segmen Pelanggan (3 Segmen)</option>
+              <option value="">Semua Segmen Pelanggan</option>
               {CUSTOMER_SEGMENTS.map((s) => (
                 <option key={s.value} value={s.value}>
                   {s.label}
@@ -260,8 +264,8 @@ export default function CustomersPage() {
         onClose={() => setModalOpen(false)}
         title={
           editingCustomer
-            ? `Ubah Pelanggan — ${editingCustomer.code}`
-            : 'Registrasi Pelanggan Komersial Baru'
+            ? `Ubah Data Pelanggan (${editingCustomer.code})`
+            : 'Tambah Pelanggan Baru'
         }
         footer={
           <>
@@ -269,14 +273,14 @@ export default function CustomersPage() {
               Batal
             </Button>
             <Button variant="primary" onClick={handleSave} disabled={saving}>
-              {saving ? 'Menyimpan...' : 'Simpan Pelanggan'}
+              {saving ? 'Menyimpan...' : 'Simpan'}
             </Button>
           </>
         }
       >
         <form onSubmit={handleSave} className="form-grid">
           <FormField
-            label="Kode Unik Pelanggan"
+            label="Kode Pelanggan"
             name="code"
             value={form.code}
             onChange={(e) => setForm({ ...form, code: e.target.value })}
@@ -287,7 +291,7 @@ export default function CustomersPage() {
           />
 
           <FormField
-            label="Segmen Pasar (Penentu Harga Bertingkat)"
+            label="Segmen Pelanggan"
             name="segment"
             type="select"
             value={form.segment}
@@ -301,7 +305,7 @@ export default function CustomersPage() {
           />
 
           <FormField
-            label="Nama Pelanggan / Toko / Perusahaan"
+            label="Nama Pelanggan / Perusahaan"
             name="name"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -312,7 +316,7 @@ export default function CustomersPage() {
           />
 
           <FormField
-            label="Nomor Telepon / Kontak PIC"
+            label="Nomor Telepon"
             name="phone"
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -320,7 +324,7 @@ export default function CustomersPage() {
           />
 
           <FormField
-            label="Termin Jatuh Tempo Faktur (Hari)"
+            label="Termin Jatuh Tempo (Hari)"
             name="payment_term_days"
             type="number"
             min="0"
@@ -328,16 +332,16 @@ export default function CustomersPage() {
             value={form.payment_term_days}
             onChange={(e) => setForm({ ...form, payment_term_days: e.target.value })}
             error={errors.payment_term_days}
-            hint="0 hari = Tunai; 14 hari = Retail; 30 hari = Pasar Modern."
+            hint="0 hari untuk pembayaran tunai."
           />
 
           <FormField
-            label="Alamat Pengiriman Lengkap"
+            label="Alamat Pengiriman"
             name="address"
             type="textarea"
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
-            placeholder="Masukkan alamat lengkap tujuan Surat Jalan (Delivery Order)"
+            placeholder="Masukkan alamat lengkap pengiriman"
             fullWidth
           />
         </form>

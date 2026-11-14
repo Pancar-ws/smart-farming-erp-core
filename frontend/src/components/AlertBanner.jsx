@@ -1,3 +1,5 @@
+import { NavIcon } from './Icons'
+
 /**
  * Komponen AlertBanner Reusable untuk Notifikasi Kontekstual
  * Varian: 'info' | 'success' | 'warning' | 'danger'
@@ -16,13 +18,15 @@ export default function AlertBanner({ variant = 'info', children, onClose }) {
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            fontWeight: 700,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             color: 'inherit',
-            fontSize: '16px',
+            padding: '2px',
           }}
           aria-label="Tutup pesan"
         >
-          ✕
+          <NavIcon name="close" size={16} />
         </button>
       )}
     </div>

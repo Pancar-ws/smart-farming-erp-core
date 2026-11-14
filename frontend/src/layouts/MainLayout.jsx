@@ -10,7 +10,7 @@ import { fetchNotificationsApi, markNotificationReadApi } from '../services/auth
 import { formatDateTimeID } from '../utils/formatters'
 
 export default function MainLayout() {
-  const { user, logout, connMode } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -21,7 +21,6 @@ export default function MainLayout() {
   const menuSections = getMenusForUser(user)
   const roleInfo = ROLE_META[user?.role] || { label: user?.role || 'Pengguna', description: '' }
 
-  // Muat notifikasi peringatan ROP & sistem untuk ikon lonceng di header
   useEffect(() => {
     let mounted = true
     async function loadNotifs() {
@@ -52,7 +51,6 @@ export default function MainLayout() {
     navigate('/login', { replace: true })
   }
 
-  // Cari nama halaman aktif untuk ditampilkan di Header
   const activeMenuItem = menuSections
     .flatMap((s) => s.items)
     .find((item) => location.pathname.startsWith(item.path))
@@ -66,19 +64,13 @@ export default function MainLayout() {
 
   return (
     <div className="app-shell">
-      {/* Sidebar Navigasi Kiri (Dinamis sesuai Role RBAC) */}
       <aside className={`app-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-brand">
           <div className="sidebar-brand-logo">SF</div>
           <div>
-            <div className="sidebar-brand-title">ERP Smart Farming</div>
-            <div className="sidebar-brand-subtitle">Koperasi Tani Agribisnis</div>
+            <div className="sidebar-brand-title">Smart Farming ERP</div>
+            <div className="sidebar-brand-subtitle">Koperasi Tani Mandiri</div>
           </div>
-        </div>
-
-        <div className="sidebar-role-box">
-          <div className="sidebar-role-label">Peran Aktif (RBAC)</div>
-          <div className="sidebar-role-name">{roleInfo.label}</div>
         </div>
 
         <nav className="sidebar-nav" aria-label="Menu Utama">
@@ -92,9 +84,8 @@ export default function MainLayout() {
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
                 >
-                  <NavIcon name={item.icon} size={19} />
+                  <NavIcon name={item.icon} size={18} />
                   <span>{item.label}</span>
-                  {item.badge && <span className="sidebar-link-badge">{item.badge}</span>}
                 </NavLink>
               ))}
             </div>
@@ -102,12 +93,11 @@ export default function MainLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <div>Sistem Rantai Pasok Berkelanjutan</div>
-          <div style={{ marginTop: '2px', opacity: 0.8 }}>SDGs 2, 8, 12 &amp; 13</div>
+          <div style={{ fontWeight: 600, color: '#FFFFFF' }}>{roleInfo.label}</div>
+          <div style={{ marginTop: '2px', opacity: 0.75 }}>Sistem Informasi Koperasi</div>
         </div>
       </aside>
 
-      {/* Area Utama & Header Atas */}
       <div className="app-main">
         <header className="app-header">
           <div className="header-left">
@@ -117,42 +107,25 @@ export default function MainLayout() {
               onClick={() => setSidebarOpen((prev) => !prev)}
               aria-label="Buka navigasi"
             >
-              ☰
+              <NavIcon name="menu" size={20} />
             </button>
             <div>
               <div className="header-page-title">
-                {activeMenuItem?.label || 'Sistem ERP Koperasi Tani'}
-              </div>
-              <div className="header-page-subtitle">
-                Manajemen Rantai Pasok Pertanian Berkelanjutan
+                {activeMenuItem?.label || 'Dashboard'}
               </div>
             </div>
           </div>
 
           <div className="header-right">
-            {/* Indikator Status Koneksi API vs Simulasi */}
-            <div
-              className="conn-pill"
-              title={
-                connMode === 'online'
-                  ? 'Terhubung langsung ke server FastAPI (localhost:8000)'
-                  : 'Server FastAPI belum terdeteksi — berjalan menggunakan data simulasi lokal'
-              }
-            >
-              <span className={`conn-dot ${connMode === 'online' ? 'online' : 'mock'}`} />
-              <span>{connMode === 'online' ? 'API Backend Aktif' : 'Mode Simulasi (Mock)'}</span>
-            </div>
-
-            {/* Lonceng Notifikasi Peringatan Stok Minimum (ROP) */}
             <div className="notif-wrapper">
               <button
                 type="button"
                 className="notif-btn"
                 onClick={() => setNotifOpen((prev) => !prev)}
                 aria-label="Notifikasi sistem"
-                title="Peringatan Stok Minimum (ROP) & Notifikasi"
+                title="Notifikasi Sistem"
               >
-                <NavIcon name="bell" size={20} />
+                <NavIcon name="bell" size={19} />
                 {notifications.length > 0 && (
                   <span className="notif-count">{notifications.length}</span>
                 )}
@@ -161,7 +134,7 @@ export default function MainLayout() {
               {notifOpen && (
                 <div className="notif-dropdown">
                   <div className="notif-dropdown-header">
-                    <span>Notifikasi &amp; Peringatan ROP</span>
+                    <span>Notifikasi</span>
                     <Badge variant={notifications.length > 0 ? 'amber' : 'green'}>
                       {notifications.length} Baru
                     </Badge>
@@ -176,7 +149,7 @@ export default function MainLayout() {
                           fontSize: '13.5px',
                         }}
                       >
-                        Tidak ada peringatan baru. Seluruh stok berada di atas batas minimum.
+                        Belum ada notifikasi baru.
                       </div>
                     ) : (
                       notifications.map((n) => (
@@ -200,7 +173,7 @@ export default function MainLayout() {
                                 padding: 0,
                                 color: 'var(--color-navy)',
                                 fontSize: '12px',
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 cursor: 'pointer',
                               }}
                             >
@@ -215,7 +188,6 @@ export default function MainLayout() {
               )}
             </div>
 
-            {/* Info Pengguna Aktif */}
             <div className="header-user-box">
               <div className="header-user-avatar">{initials}</div>
               <div>
@@ -225,10 +197,14 @@ export default function MainLayout() {
             </div>
 
             <Button
-              variant="danger"
+              variant="outline"
               size="sm"
               onClick={handleLogout}
-              title="Keluar dari sesi pengguna"
+              style={{
+                background: 'rgba(255, 255, 255, 0.12)',
+                color: '#FFFFFF',
+                borderColor: 'rgba(255, 255, 255, 0.24)',
+              }}
             >
               Keluar
             </Button>

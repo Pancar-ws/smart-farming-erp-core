@@ -1,5 +1,5 @@
 /**
- * Ikon SVG ringan untuk Navigasi Sidebar & Header
+ * Ikon SVG untuk Navigasi Sidebar, Header, dan Dialog
  */
 export function NavIcon({ name, size = 20 }) {
   const props = {
@@ -108,6 +108,21 @@ export function NavIcon({ name, size = 20 }) {
         <svg {...props}>
           <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
           <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+        </svg>
+      )
+    case 'menu':
+      return (
+        <svg {...props}>
+          <line x1="4" y1="6" x2="20" y2="6" />
+          <line x1="4" y1="12" x2="20" y2="12" />
+          <line x1="4" y1="18" x2="20" y2="18" />
+        </svg>
+      )
+    case 'close':
+      return (
+        <svg {...props}>
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       )
     default:

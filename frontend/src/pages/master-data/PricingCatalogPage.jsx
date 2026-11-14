@@ -16,10 +16,6 @@ import {
 } from '../../services/masterService'
 import { formatDateID, formatRupiah, todayISODate } from '../../utils/formatters'
 
-/**
- * Halaman Katalog Produk, Kriteria Grade & Daftar Harga Jual Bertingkat per Segmen
- * (URS-DAT-002, URS-DAT-003, URS-SLS-003, SRS-SLS-003, dan UAT-12)
- */
 export default function PricingCatalogPage() {
   const { hasPermission } = useAuth()
   const canWriteSalesPrice = hasPermission(['price:sales:write'])
@@ -90,21 +86,48 @@ export default function PricingCatalogPage() {
     return prod && g.category_id === prod.category_id
   })
 
+  const openPriceModal = () => {
+    const firstProd = products[0]
+    const firstGrade = Object.values(gradesMap).find(
+      (g) => firstProd && g.category_id === firstProd.category_id && !g.is_reject
+    )
+    setForm({
+      product_id: firstProd ? String(firstProd.id) : '1',
+      grade_id: firstGrade ? String(firstGrade.id) : '1',
+      segment: 'RETAIL',
+      price: '46000',
+      valid_from: todayISODate(),
+      note: 'Pembaruan harga jual segmen',
+    })
+    setModalOpen(true)
+  }
+
   const handleSavePrice = async (e) => {
     e.preventDefault()
+    const selectedGrade = gradesMap[Number(form.grade_id)]
+    const priceNum = Number(form.price)
+
+    if (selectedGrade?.is_reject && priceNum !== 0) {
+      setBanner({
+        type: 'danger',
+        text: 'Harga untuk grade afkir wajib bernilai Rp 0.',
+      })
+      return
+    }
+
     setSaving(true)
     try {
       await createSalesPriceApi({
         product_id: Number(form.product_id),
         grade_id: Number(form.grade_id),
         segment: form.segment,
-        price: Number(form.price),
-        valid_from: form.valid_from || todayISODate(),
+        price: priceNum,
+        valid_from: form.valid_from,
         note: form.note.trim() || null,
       })
       setBanner({
         type: 'success',
-        text: 'Harga jual bertingkat baru berhasil disimpan ke daftar harga efektif.',
+        text: `Harga jual segmen ${form.segment} berhasil disimpan (${formatRupiah(priceNum)}/kg).`,
       })
       setModalOpen(false)
       loadAll()
@@ -119,20 +142,16 @@ export default function PricingCatalogPage() {
     <div>
       <div className="page-header">
         <div>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '6px' }}>
-            <Badge variant="navy">Master Produk, Grade &amp; Price Tiering</Badge>
-            <Badge variant="green">URS-DAT-002/003 &amp; URS-SLS-003</Badge>
-          </div>
-          <h1 className="page-title">Katalog Komoditas, Mutu Grade &amp; Daftar Harga Segmen</h1>
+          <h1 className="page-title">Katalog Produk, Grade &amp; Daftar Harga</h1>
           <p className="page-subtitle">
-            Konfigurasi masa simpan per kategori produk, standar grade mutu (A, B, Premium, Medium,
-            Afkir), harga beli petani, serta matriks harga jual 3 segmen pelanggan.
+            Daftar komoditas pertanian, standar kelas mutu (Grade), harga beli dari petani anggota,
+            dan daftar harga jual per segmen pelanggan.
           </p>
         </div>
 
         {canWriteSalesPrice && (
-          <Button variant="primary" onClick={() => setModalOpen(true)}>
-            + Perbarui Harga Jual Segmen
+          <Button variant="primary" onClick={openPriceModal}>
+            + Atur Harga Jual Segmen
           </Button>
         )}
       </div>
@@ -144,14 +163,13 @@ export default function PricingCatalogPage() {
         {banner.text}
       </AlertBanner>
 
-      {/* Tabel Kategori Produk & Masa Simpan */}
       <div className="card" style={{ marginBottom: '24px' }}>
         <div className="card-header">
           <div>
-            <h2 className="card-title">1. Master Kategori Komoditas, Kriteria Grading &amp; Masa Simpan</h2>
+            <h2 className="card-title">Komoditas, Standar Grading &amp; Harga Beli Anggota</h2>
             <p className="card-subtitle">
-              Menentukan parameter Quality Check (QC) dan peringatan kadaluarsa batch di gudang
-              (<code>URS-MFG-001</code> &amp; <code>URS-INV-008</code>).
+              Parameter pemeriksaan kualitas hasil panen, masa simpan gudang, dan harga beli per
+              grade.
             </p>
           </div>
         </div>
@@ -173,7 +191,7 @@ export default function PricingCatalogPage() {
             },
             {
               key: 'criteria',
-              header: 'Dasar Kriteria Grading QC',
+              header: 'Kriteria Pemeriksaan Mutu',
               render: (r) => {
                 const cat = categoryLookup(r.category_id)
                 const list = cat?.grading_criteria?.kriteria || []
@@ -182,7 +200,7 @@ export default function PricingCatalogPage() {
             },
             {
               key: 'shelf_life',
-              header: 'Masa Simpan Maksimal',
+              header: 'Masa Simpan',
               render: (r) => {
                 const cat = categoryLookup(r.category_id)
                 return `${cat?.shelf_life_days || '-'} Hari (Peringatan H-${cat?.expiry_warning_days || 2})`
@@ -190,7 +208,7 @@ export default function PricingCatalogPage() {
             },
             {
               key: 'buy_prices',
-              header: 'Harga Beli ke Anggota (URS 8.1)',
+              header: 'Harga Beli Anggota',
               render: (r) => {
                 const pList = purchasePrices.filter((pp) => pp.product_id === r.id)
                 return (
@@ -211,16 +229,12 @@ export default function PricingCatalogPage() {
         />
       </div>
 
-      {/* Tabel Matriks Harga Jual Bertingkat per Segmen (Price Tiering) */}
       <div className="card">
         <div className="card-header">
           <div>
-            <h2 className="card-title">
-              2. Matriks Daftar Harga Jual Bertingkat per Segmen Pelanggan (Price Tiering)
-            </h2>
+            <h2 className="card-title">Daftar Harga Jual per Segmen Pelanggan</h2>
             <p className="card-subtitle">
-              Harga di bawah ini akan <strong>terkunci otomatis (read-only)</strong> pada layar
-              Sales Order (<code>UI-SLS-01</code>) saat staf memilih segmen pelanggan.
+              Harga jual di bawah ini diterapkan secara otomatis pada pembuatan pesanan penjualan.
             </p>
           </div>
 
@@ -230,10 +244,10 @@ export default function PricingCatalogPage() {
             value={selectedProductId}
             onChange={(e) => setSelectedProductId(e.target.value)}
           >
-            <option value="">Semua Komoditas Produk</option>
+            <option value="">Semua Komoditas</option>
             {products.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.code} — {p.name}
+                {p.code} - {p.name}
               </option>
             ))}
           </select>
@@ -246,7 +260,7 @@ export default function PricingCatalogPage() {
           columns={[
             {
               key: 'product',
-              header: 'Komoditas Produk',
+              header: 'Komoditas',
               render: (r) => {
                 const p = productLookup(r.product_id)
                 return <strong>{p ? `${p.name} (${p.code})` : `Produk #${r.product_id}`}</strong>
@@ -254,7 +268,7 @@ export default function PricingCatalogPage() {
             },
             {
               key: 'grade',
-              header: 'Kelas Mutu (Grade)',
+              header: 'Grade Mutu',
               render: (r) => {
                 const g = gradesMap[r.grade_id]
                 return (
@@ -266,7 +280,7 @@ export default function PricingCatalogPage() {
             },
             {
               key: 'segment',
-              header: 'Segmen Pembeli',
+              header: 'Segmen Pelanggan',
               render: (r) => (
                 <Badge
                   variant={
@@ -283,7 +297,7 @@ export default function PricingCatalogPage() {
             },
             {
               key: 'price',
-              header: 'Harga Jual Satuan (/kg)',
+              header: 'Harga Jual Satuan',
               render: (r) => <strong>{formatRupiah(r.price)} / kg</strong>,
             },
             {
@@ -291,30 +305,29 @@ export default function PricingCatalogPage() {
               header: 'Berlaku Mulai',
               render: (r) => formatDateID(r.valid_from),
             },
-            { key: 'note', header: 'Catatan', render: (r) => r.note || '-' },
+            { key: 'note', header: 'Keterangan', render: (r) => r.note || '-' },
           ]}
         />
       </div>
 
-      {/* Modal Tambah/Perbarui Harga Jual Segmen */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="Tetapkan Harga Jual Baru per Grade & Segmen Pelanggan"
+        title="Atur Harga Jual per Grade & Segmen"
         footer={
           <>
             <Button variant="outline" onClick={() => setModalOpen(false)}>
               Batal
             </Button>
             <Button variant="primary" onClick={handleSavePrice} disabled={saving}>
-              {saving ? 'Menyimpan...' : 'Simpan Harga Efektif'}
+              {saving ? 'Menyimpan...' : 'Simpan Harga'}
             </Button>
           </>
         }
       >
         <form onSubmit={handleSavePrice} className="form-grid">
           <FormField
-            label="Pilih Komoditas Produk"
+            label="Komoditas"
             name="product_id"
             type="select"
             value={form.product_id}
@@ -330,12 +343,12 @@ export default function PricingCatalogPage() {
                 grade_id: firstGrade ? String(firstGrade.id) : '',
               })
             }}
-            options={products.map((p) => ({ value: String(p.id), label: `${p.code} — ${p.name}` }))}
+            options={products.map((p) => ({ value: String(p.id), label: `${p.code} - ${p.name}` }))}
             required
           />
 
           <FormField
-            label="Pilih Kelas Mutu (Grade)"
+            label="Kelas Mutu (Grade)"
             name="grade_id"
             type="select"
             value={form.grade_id}
@@ -350,7 +363,7 @@ export default function PricingCatalogPage() {
             }}
             options={availableGradesForForm.map((g) => ({
               value: String(g.id),
-              label: `${g.code} — ${g.name}`,
+              label: `${g.code} - ${g.name}`,
             }))}
             required
           />
@@ -362,15 +375,15 @@ export default function PricingCatalogPage() {
             value={form.segment}
             onChange={(e) => setForm({ ...form, segment: e.target.value })}
             options={[
-              { value: 'KONSUMEN', label: 'KONSUMEN (Konsumen Langsung)' },
-              { value: 'RETAIL', label: 'RETAIL (Toko & Warung)' },
-              { value: 'PASAR_MODERN', label: 'PASAR_MODERN (Supermarket)' },
+              { value: 'KONSUMEN', label: 'Konsumen Langsung' },
+              { value: 'RETAIL', label: 'Retail (Toko & Warung)' },
+              { value: 'PASAR_MODERN', label: 'Pasar Modern (Supermarket)' },
             ]}
             required
           />
 
           <FormField
-            label="Harga Jual Efektif per kg (Rp)"
+            label="Harga Jual per kg (Rp)"
             name="price"
             type="number"
             min="0"
@@ -379,12 +392,12 @@ export default function PricingCatalogPage() {
             onChange={(e) => setForm({ ...form, price: e.target.value })}
             placeholder="Contoh: 46000"
             required
-            readOnly={ Boolean(gradesMap[Number(form.grade_id)]?.is_reject) }
-            hint="Aturan Zero Value Rule: Grade Afkir otomatis dikunci Rp 0."
+            readOnly={Boolean(gradesMap[Number(form.grade_id)]?.is_reject)}
+            hint="Grade afkir otomatis bernilai Rp 0."
           />
 
           <FormField
-            label="Tanggal Mulai Berlaku"
+            label="Berlaku Mulai Tanggal"
             name="valid_from"
             type="date"
             value={form.valid_from}
@@ -393,11 +406,11 @@ export default function PricingCatalogPage() {
           />
 
           <FormField
-            label="Catatan Perubahan Harga"
+            label="Catatan"
             name="note"
             value={form.note}
             onChange={(e) => setForm({ ...form, note: e.target.value })}
-            placeholder="Contoh: Penyesuaian harga kontrak Q4"
+            placeholder="Contoh: Penyesuaian harga kuartal berjalan"
           />
         </form>
       </Modal>

@@ -189,7 +189,7 @@ export async function createSalesOrderApi(payload) {
 
       if (remaining > 0) {
         throw new ApiError(
-          'Jumlah pesanan melebihi stok tersedia (URS-SLS-004)',
+          'Jumlah pesanan melebihi stok yang tersedia di gudang',
           422,
           'INSUFFICIENT_STOCK',
           { requested: String(qty), available: String(qty - remaining) }

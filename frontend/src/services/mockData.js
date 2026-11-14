@@ -48,8 +48,8 @@ const INITIAL_MOCK_DB = {
     { id: 3, code: 'PISANG', name: 'Pisang Cavendish', category_id: 3, uom: 'kg', is_active: true },
   ],
   purchasePrices: [
-    { id: 1, product_id: 1, grade_id: 1, price: 38000, valid_from: '2026-01-01', note: 'Harga beli Cabai Grade A (URS 8.1)' },
-    { id: 2, product_id: 1, grade_id: 2, price: 30000, valid_from: '2026-01-01', note: 'Harga beli Cabai Grade B (URS 8.1)' },
+    { id: 1, product_id: 1, grade_id: 1, price: 38000, valid_from: '2026-01-01', note: 'Harga beli Cabai Grade A' },
+    { id: 2, product_id: 1, grade_id: 2, price: 30000, valid_from: '2026-01-01', note: 'Harga beli Cabai Grade B' },
     { id: 3, product_id: 1, grade_id: 3, price: 0, valid_from: '2026-01-01', note: 'Afkir Rp0' },
     { id: 4, product_id: 2, grade_id: 4, price: 11500, valid_from: '2026-01-01', note: 'Harga beli Beras Premium' },
     { id: 5, product_id: 2, grade_id: 5, price: 9800, valid_from: '2026-01-01', note: 'Harga beli Beras Medium' },
@@ -57,13 +57,13 @@ const INITIAL_MOCK_DB = {
     { id: 7, product_id: 3, grade_id: 8, price: 6500, valid_from: '2026-01-01', note: 'Harga beli Pisang Grade B' },
   ],
   salesPrices: [
-    // Cabai Grade A (KONSUMEN: 48.000, RETAIL: 46.000 [URS 8.1], PASAR_MODERN: 44.000)
+    // Cabai Grade A
     { id: 1, product_id: 1, grade_id: 1, segment: 'KONSUMEN', price: 48000, valid_from: '2026-01-01', note: 'Harga eceran konsumen langsung' },
-    { id: 2, product_id: 1, grade_id: 1, segment: 'RETAIL', price: 46000, valid_from: '2026-01-01', note: 'Harga segmen retail/toko (URS 8.1)' },
+    { id: 2, product_id: 1, grade_id: 1, segment: 'RETAIL', price: 46000, valid_from: '2026-01-01', note: 'Harga segmen retail/toko' },
     { id: 3, product_id: 1, grade_id: 1, segment: 'PASAR_MODERN', price: 44000, valid_from: '2026-01-01', note: 'Harga kontrak supermarket' },
-    // Cabai Grade B (KONSUMEN: 38.000, RETAIL: 36.000 [URS 8.1], PASAR_MODERN: 34.000)
+    // Cabai Grade B
     { id: 4, product_id: 1, grade_id: 2, segment: 'KONSUMEN', price: 38000, valid_from: '2026-01-01', note: 'Harga eceran Grade B' },
-    { id: 5, product_id: 1, grade_id: 2, segment: 'RETAIL', price: 36000, valid_from: '2026-01-01', note: 'Harga retail Grade B (URS 8.1)' },
+    { id: 5, product_id: 1, grade_id: 2, segment: 'RETAIL', price: 36000, valid_from: '2026-01-01', note: 'Harga retail Grade B' },
     { id: 6, product_id: 1, grade_id: 2, segment: 'PASAR_MODERN', price: 34000, valid_from: '2026-01-01', note: 'Harga grosir modern Grade B' },
     // Beras Premium
     { id: 7, product_id: 2, grade_id: 4, segment: 'KONSUMEN', price: 14500, valid_from: '2026-01-01', note: 'Harga eceran Beras Premium' },
@@ -401,7 +401,7 @@ const INITIAL_MOCK_DB = {
       order_date: '2026-11-14',
       status: 'SHIPPED',
       total: 39400000,
-      note: 'Simulasi UAT-08 batch cabai (Grade A 700 kg + Grade B 200 kg)',
+      note: 'Pesanan Cabai (Grade A 700 kg + Grade B 200 kg)',
       do_no: 'DO-202611-0001',
       invoice_no: 'INV-202611-0001',
       lines: [
@@ -435,7 +435,7 @@ const INITIAL_MOCK_DB = {
       id: 1,
       type: 'ROP',
       severity: 'WARNING',
-      message: 'Stok Pupuk NPK Phonska 420 kg <= minimum 500 kg — Perlu Restock segera (URS-INV-002)',
+      message: 'Stok Pupuk NPK Phonska 420 kg berada di bawah batas minimum 500 kg.',
       payload: { saprotan_id: 2 },
       is_read: false,
       created_at: '2026-11-14T08:15:00+07:00',
@@ -444,7 +444,7 @@ const INITIAL_MOCK_DB = {
       id: 2,
       type: 'EXPIRY',
       severity: 'INFO',
-      message: 'Batch Cabai BCH-20261110-001 (300 kg Grade A) mendekati masa simpan (sisa 2 hari) — Prioritaskan alokasi FIFO',
+      message: 'Batch Cabai BCH-20261110-001 (300 kg Grade A) mendekati batas masa simpan.',
       payload: { batch_code: 'BCH-20261110-001' },
       is_read: false,
       created_at: '2026-11-14T09:00:00+07:00',

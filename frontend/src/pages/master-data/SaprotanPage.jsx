@@ -15,18 +15,18 @@ import {
 import { formatNumberID, formatRupiah } from '../../utils/formatters'
 
 const SAPROTAN_TYPES = [
-  { value: 'BENIH', label: 'BENIH (Benih Tanaman)' },
-  { value: 'PUPUK_KIMIA', label: 'PUPUK_KIMIA (Pupuk NPK / Kimia)' },
-  { value: 'PUPUK_ORGANIK', label: 'PUPUK_ORGANIK (Pupuk Kompos / Ramah Lingkungan)' },
-  { value: 'KEMASAN', label: 'KEMASAN (Karung, Peti, Ikat)' },
+  { value: 'PUPUK_ORGANIK', label: 'PUPUK_ORGANIK (Pupuk Organik / Kompos)' },
+  { value: 'PUPUK_KIMIA', label: 'PUPUK_KIMIA (Pupuk Kimia / NPK / Urea)' },
+  { value: 'BENIH', label: 'BENIH (Benih / Bibit Tanaman)' },
+  { value: 'PESTISIDA', label: 'PESTISIDA (Pestisida / Obat Pertanian)' },
+  { value: 'KEMASAN', label: 'KEMASAN (Karung / Keranjang / Plastik)' },
 ]
 
 const UOM_OPTIONS = [
-  { value: 'kg', label: 'kg (Kilogram)' },
-  { value: 'Pak', label: 'Pak (Kemasan Benih)' },
-  { value: 'Sak 50kg', label: 'Sak 50kg' },
+  { value: 'kg', label: 'Kilogram (kg)' },
+  { value: 'Liter', label: 'Liter (L)' },
+  { value: 'Pak', label: 'Pak / Sachet' },
   { value: 'Pcs', label: 'Pcs / Lembar' },
-  { value: 'Botol 1L', label: 'Botol 1 Liter' },
 ]
 
 const INITIAL_FORM = {
@@ -39,9 +39,6 @@ const INITIAL_FORM = {
   min_stock: '500',
 }
 
-/**
- * Halaman Master Data Saprotan (Fitur 1 - URS-DAT-004, URS-INV-002, SDD Tabel 4.2)
- */
 export default function SaprotanPage() {
   const { hasPermission } = useAuth()
   const canWrite = hasPermission(['master:write'])
@@ -128,23 +125,29 @@ export default function SaprotanPage() {
     const nextErr = {}
     if (!form.code.trim()) {
       nextErr.code = 'Kode saprotan wajib diisi (contoh: SPT-00005).'
+    } else if (
+      !editingItem &&
+      items.some((i) => i.code.toLowerCase() === form.code.trim().toLowerCase())
+    ) {
+      nextErr.code = 'Kode saprotan sudah terdaftar.'
     }
+
     if (!form.name.trim()) {
       nextErr.name = 'Nama item saprotan wajib diisi.'
     }
+
     const buyPrice = Number(form.purchase_price)
     const sellPrice = Number(form.member_price)
     const minStock = Number(form.min_stock)
 
-    if (form.purchase_price === '' || Number.isNaN(buyPrice) || buyPrice < 0) {
-      nextErr.purchase_price = 'Harga beli dari supplier wajib >= Rp 0.'
+    if (Number.isNaN(buyPrice) || buyPrice < 0) {
+      nextErr.purchase_price = 'Harga beli dari supplier tidak boleh negatif.'
     }
-    if (form.member_price === '' || Number.isNaN(sellPrice) || sellPrice < buyPrice) {
-      nextErr.member_price =
-        'Harga penyaluran anggota wajib >= harga beli supplier (SDD Tabel 4.2).'
+    if (Number.isNaN(sellPrice) || sellPrice < buyPrice) {
+      nextErr.member_price = 'Harga salur ke anggota tidak boleh lebih rendah dari harga beli.'
     }
-    if (form.min_stock === '' || Number.isNaN(minStock) || minStock < 0) {
-      nextErr.min_stock = 'Batas stok minimum (ROP) wajib >= 0.'
+    if (Number.isNaN(minStock) || minStock < 0) {
+      nextErr.min_stock = 'Batas stok minimum tidak boleh negatif.'
     }
 
     setErrors(nextErr)
@@ -183,15 +186,15 @@ export default function SaprotanPage() {
       setModalOpen(false)
       loadData()
     } catch (err) {
-      setBanner({ type: 'danger', text: err.message || 'Gagal menyimpan data saprotan.' })
+      setBanner({ type: 'danger', text: err.message || 'Gagal menyimpan master saprotan.' })
     } finally {
       setSaving(false)
     }
   }
 
   const columns = [
-    { key: 'code', header: 'Kode Item', render: (r) => <strong>{r.code}</strong> },
-    { key: 'name', header: 'Nama Barang Saprotan' },
+    { key: 'code', header: 'Kode Barang', render: (r) => <strong>{r.code}</strong> },
+    { key: 'name', header: 'Nama Saprotan' },
     {
       key: 'type',
       header: 'Kategori',
@@ -218,19 +221,19 @@ export default function SaprotanPage() {
     },
     {
       key: 'min_stock',
-      header: 'Stok Minimum (ROP)',
+      header: 'Stok Minimum',
       render: (r) => `${formatNumberID(r.min_stock)} ${r.uom}`,
     },
     {
       key: 'qty_on_hand',
-      header: 'Stok Gudang & Status',
+      header: 'Stok Gudang',
       render: (r) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <strong>
             {formatNumberID(r.qty_on_hand)} {r.uom}
           </strong>
           {r.below_minimum ? (
-            <Badge variant="amber">⚠ Perlu Restock</Badge>
+            <Badge variant="amber">Perlu Pengadaan</Badge>
           ) : (
             <Badge variant="green">Stok Aman</Badge>
           )}
@@ -255,20 +258,16 @@ export default function SaprotanPage() {
     <div>
       <div className="page-header">
         <div>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '6px' }}>
-            <Badge variant="navy">Fitur 1 — Master Saprotan</Badge>
-            <Badge variant="amber">URS-DAT-004 &amp; URS-INV-002</Badge>
-          </div>
           <h1 className="page-title">Master Sarana Produksi Pertanian (Saprotan)</h1>
           <p className="page-subtitle">
-            Pengelolaan katalog benih, pupuk organik, pupuk kimia (NPK), dan kemasan beserta
-            ambang batas stok minimum (Reorder Point / ROP).
+            Kelola katalog benih, pupuk organik, pupuk kimia, dan kemasan beserta batas stok
+            minimum gudang.
           </p>
         </div>
 
         {canWrite && (
           <Button variant="primary" onClick={openCreateModal}>
-            + Tambah Item Saprotan
+            + Tambah Saprotan
           </Button>
         )}
       </div>
@@ -297,10 +296,6 @@ export default function SaprotanPage() {
               ))}
             </select>
           </div>
-          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-            Pembedaan <strong>PUPUK_ORGANIK</strong> vs <strong>PUPUK_KIMIA</strong> digunakan
-            otomatis untuk kalkulasi rasio ESG Environmental (<code>URS-RPT-007</code>).
-          </div>
         </div>
 
         <Table
@@ -317,8 +312,8 @@ export default function SaprotanPage() {
         onClose={() => setModalOpen(false)}
         title={
           editingItem
-            ? `Ubah Master Saprotan — ${editingItem.code}`
-            : 'Tambah Item Master Saprotan Baru'
+            ? `Ubah Data Saprotan (${editingItem.code})`
+            : 'Tambah Item Saprotan Baru'
         }
         footer={
           <>
@@ -326,14 +321,14 @@ export default function SaprotanPage() {
               Batal
             </Button>
             <Button variant="primary" onClick={handleSave} disabled={saving}>
-              {saving ? 'Menyimpan...' : 'Simpan Saprotan'}
+              {saving ? 'Menyimpan...' : 'Simpan'}
             </Button>
           </>
         }
       >
         <form onSubmit={handleSave} className="form-grid">
           <FormField
-            label="Kode Unik Saprotan"
+            label="Kode Barang"
             name="code"
             value={form.code}
             onChange={(e) => setForm({ ...form, code: e.target.value })}
@@ -341,11 +336,10 @@ export default function SaprotanPage() {
             required
             readOnly={Boolean(editingItem)}
             error={errors.code}
-            hint="Format standar: SPT-XXXXX (SDD Tabel 4.2)."
           />
 
           <FormField
-            label="Kategori Klasifikasi"
+            label="Kategori"
             name="type"
             type="select"
             value={form.type}
@@ -355,7 +349,7 @@ export default function SaprotanPage() {
           />
 
           <FormField
-            label="Nama Komersial Barang Saprotan"
+            label="Nama Barang Saprotan"
             name="name"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -366,7 +360,7 @@ export default function SaprotanPage() {
           />
 
           <FormField
-            label="Satuan Ukur Kemasan (UOM)"
+            label="Satuan Ukur"
             name="uom"
             type="select"
             value={form.uom}
@@ -376,7 +370,7 @@ export default function SaprotanPage() {
           />
 
           <FormField
-            label="Batas Stok Minimum (Reorder Point / ROP)"
+            label="Batas Stok Minimum Gudang"
             name="min_stock"
             type="number"
             min="0"
@@ -385,11 +379,10 @@ export default function SaprotanPage() {
             onChange={(e) => setForm({ ...form, min_stock: e.target.value })}
             required
             error={errors.min_stock}
-            hint="Default 500 kg untuk Pupuk NPK & Organik (URS-INV-002)."
           />
 
           <FormField
-            label="Harga Beli Satuan dari Supplier (Rp)"
+            label="Harga Beli dari Supplier (Rp)"
             name="purchase_price"
             type="number"
             min="0"
@@ -402,7 +395,7 @@ export default function SaprotanPage() {
           />
 
           <FormField
-            label="Harga Penyaluran ke Anggota (Rp)"
+            label="Harga Salur ke Anggota (Rp)"
             name="member_price"
             type="number"
             min="0"
@@ -412,7 +405,6 @@ export default function SaprotanPage() {
             placeholder="Contoh: 13000"
             required
             error={errors.member_price}
-            hint="Wajib >= harga beli dari supplier."
           />
         </form>
       </Modal>
