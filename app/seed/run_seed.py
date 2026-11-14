@@ -29,7 +29,7 @@ def execute_sql_files(db):
 
 def seed_users(db):
     print("Seeding users...")
-    roles = db.scalars(select(Role)).all()
+    roles = db.scalars(select(Role)).unique().all()
     role_map = {r.code: r.id for r in roles}
 
     default_users = [

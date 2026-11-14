@@ -36,7 +36,9 @@ def upgrade() -> None:
         fpath = SQL_DIR / fname
         if fpath.exists():
             content = fpath.read_text(encoding="utf-8")
-            op.execute(sa.text(content))
+            # Gunakan connection.exec_driver_sql agar SQLAlchemy tidak menganggap tanda titik dua (:) sebagai bind parameter
+            bind = op.get_bind()
+            bind.exec_driver_sql(content)
 
 def downgrade() -> None:
     pass

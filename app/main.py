@@ -10,16 +10,16 @@ from app.core.errors import register_error_handlers
 limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
 
 def create_app() -> FastAPI:
-    app = FastAPI(title=settings.app_name, version="1.0.0", docs_url="/docs", redoc_url="/redoc")
-    app.state.limiter = limiter
-    app.add_middleware(
+    application = FastAPI(title=settings.app_name, version="1.0.0", docs_url="/docs", redoc_url="/redoc")
+    application.state.limiter = limiter
+    application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    register_error_handlers(app)
+    register_error_handlers(application)
 
     # Registrasi handler event (WAJIB di-import agar @subscribe terdaftar)
     import app.modules.accounting.handlers  # noqa
@@ -47,9 +47,9 @@ def create_app() -> FastAPI:
         accounting_router,
         reporting_router,
     ):
-        app.include_router(r, prefix="/api/v1")
+        application.include_router(r, prefix="/api/v1")
 
-    @app.get("/")
+    @application.get("/")
     def root():
         return {
             "app": settings.app_name,
@@ -58,7 +58,7 @@ def create_app() -> FastAPI:
             "status": "healthy",
         }
 
-    return app
+    return application
 
 app = create_app()
 
