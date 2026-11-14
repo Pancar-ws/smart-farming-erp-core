@@ -3,6 +3,10 @@ import { ROLES } from '../config/roles'
 import MainLayout from '../layouts/MainLayout'
 import LoginPage from '../pages/auth/LoginPage'
 import DashboardPage from '../pages/dashboard/DashboardPage'
+import CustomersPage from '../pages/master-data/CustomersPage'
+import MembersPage from '../pages/master-data/MembersPage'
+import PricingCatalogPage from '../pages/master-data/PricingCatalogPage'
+import SaprotanPage from '../pages/master-data/SaprotanPage'
 import ModulePlaceholderPage from '../pages/placeholders/ModulePlaceholderPage'
 import ProtectedRoute from './ProtectedRoute'
 
@@ -23,17 +27,12 @@ export default function AppRoutes() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
 
-        {/* FITUR 1: Modul Master Data & Keanggotaan (Branch feature/rani-master-data) */}
+        {/* FITUR 1: Modul Master Data & Keanggotaan (Tugas Rani) */}
         <Route
           path="/master/members"
           element={
             <ProtectedRoute requiredPermissions={['member:read', 'member:write']}>
-              <ModulePlaceholderPage
-                screenId="UI-MBR-01"
-                title="Direktori Petani Anggota & Rekap Setoran"
-                owner="Rani (Branch: feature/rani-master-data)"
-                description="Modul pendaftaran petani anggota, validasi NIK & luas lahan, serta rekap setoran anggota."
-              />
+              <MembersPage />
             </ProtectedRoute>
           }
         />
@@ -51,12 +50,7 @@ export default function AppRoutes() {
                 ROLES.PENGURUS,
               ]}
             >
-              <ModulePlaceholderPage
-                screenId="UI-SPT-01"
-                title="Master Saprotan & Stok Minimum (ROP)"
-                owner="Rani (Branch: feature/rani-master-data)"
-                description="Modul katalog saprotan (pupuk, benih, pestisida) dan pemantauan stok minimum."
-              />
+              <SaprotanPage />
             </ProtectedRoute>
           }
         />
@@ -73,12 +67,7 @@ export default function AppRoutes() {
                 ROLES.PENGURUS,
               ]}
             >
-              <ModulePlaceholderPage
-                screenId="UI-CST-01"
-                title="Direktori Pelanggan Komersial (3 Segmen)"
-                owner="Rani (Branch: feature/rani-master-data)"
-                description="Modul pengelolaan pelanggan Konsumen Langsung, Retail Lokal, dan Pasar Modern."
-              />
+              <CustomersPage />
             </ProtectedRoute>
           }
         />
@@ -96,12 +85,7 @@ export default function AppRoutes() {
                 ROLES.PENGURUS,
               ]}
             >
-              <ModulePlaceholderPage
-                screenId="UI-PRC-CAT"
-                title="Katalog Produk, Kriteria Grade & Daftar Harga"
-                owner="Rani (Branch: feature/rani-master-data)"
-                description="Modul daftar produk komoditas, aturan grade mutu, dan matriks harga jual bertingkat."
-              />
+              <PricingCatalogPage />
             </ProtectedRoute>
           }
         />
