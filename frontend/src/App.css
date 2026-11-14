@@ -6,17 +6,20 @@
 /* --- App Shell Layout --- */
 .app-shell {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background-color: var(--bg-app);
 }
 
 .app-sidebar {
   width: 272px;
+  height: 100vh;
   background: linear-gradient(180deg, var(--color-navy-dark) 0%, var(--color-navy) 100%);
   color: #FFFFFF;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  overflow: hidden;
   transition: transform 0.25s ease, width 0.25s ease;
   z-index: 40;
   box-shadow: 2px 0 12px rgba(15, 23, 42, 0.15);
@@ -84,9 +87,27 @@
   flex: 1;
   padding: 8px 12px 20px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.38);
 }
 
 .sidebar-section-label {
@@ -147,6 +168,9 @@
 /* --- Main Content & Top Header --- */
 .app-main {
   flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -154,6 +178,7 @@
 
 .app-header {
   height: 68px;
+  flex-shrink: 0;
   background-color: var(--color-navy);
   color: #FFFFFF;
   padding: 0 24px;

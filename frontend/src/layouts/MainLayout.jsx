@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Badge from '../components/Badge'
 import Button from '../components/Button'
@@ -13,6 +13,7 @@ export default function MainLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const mainRef = useRef(null)
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
@@ -22,6 +23,9 @@ export default function MainLayout() {
   const roleInfo = ROLE_META[user?.role] || { label: user?.role || 'Pengguna', description: '' }
 
   useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTo({ top: 0, behavior: 'instant' })
+    }
     let mounted = true
     async function loadNotifs() {
       try {
@@ -98,7 +102,7 @@ export default function MainLayout() {
         </div>
       </aside>
 
-      <div className="app-main">
+      <div className="app-main" ref={mainRef}>
         <header className="app-header">
           <div className="header-left">
             <button
