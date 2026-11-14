@@ -8,6 +8,7 @@ import MembersPage from '../pages/master-data/MembersPage'
 import PricingCatalogPage from '../pages/master-data/PricingCatalogPage'
 import SaprotanPage from '../pages/master-data/SaprotanPage'
 import ModulePlaceholderPage from '../pages/placeholders/ModulePlaceholderPage'
+import SalesOrderPage from '../pages/sales/SalesOrderPage'
 import ProtectedRoute from './ProtectedRoute'
 
 export default function AppRoutes() {
@@ -90,17 +91,12 @@ export default function AppRoutes() {
           }
         />
 
-        {/* FITUR 5: Modul Sales, Price Tiering & Alokasi FIFO (Branch feature/rani-sales-price-tiering) */}
+        {/* FITUR 5: Modul Sales, Price Tiering & Alokasi FIFO (Tugas Rani) */}
         <Route
           path="/sales/orders"
           element={
             <ProtectedRoute requiredPermissions={['sales:read', 'sales:order', 'sales:ship']}>
-              <ModulePlaceholderPage
-                screenId="UI-SLS-01"
-                title="Sales Order, Price Tiering & Alokasi FIFO"
-                owner="Rani (Branch: feature/rani-sales-price-tiering)"
-                description="Antarmuka pembuatan pesanan penjualan dengan penguncian harga otomatis per segmen dan alokasi batch FIFO."
-              />
+              <SalesOrderPage />
             </ProtectedRoute>
           }
         />
