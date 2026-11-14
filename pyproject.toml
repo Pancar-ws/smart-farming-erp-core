@@ -1,0 +1,15 @@
+[project]
+name = "smartfarm-erp-backend"
+version = "1.0.0"
+description = "ERP Smart Farming Koperasi Tani Backend API"
+readme = "README.md"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 120
+
