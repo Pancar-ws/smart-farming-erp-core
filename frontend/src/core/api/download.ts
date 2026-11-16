@@ -1,4 +1,3 @@
-// src/core/api/download.ts
 import { useSession } from '@/core/auth/session';
 import { toApiError } from './errors';
 
@@ -12,7 +11,8 @@ export async function downloadReport(
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   const url = new URL(base + cleanPath, window.location.origin);
 
-  Object.entries({ ...query, format }).forEach(([k, v]) => {
+  const params: Record<string, unknown> = { ...query, format };
+  Object.entries(params).forEach(([k, v]) => {
     if (v != null && v !== '') {
       url.searchParams.set(k, String(v));
     }
@@ -36,4 +36,3 @@ export async function downloadReport(
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
 }
-
