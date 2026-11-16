@@ -1,0 +1,8 @@
+{
+  "apiBaseUrl": "/api/v1",
+  "orgName": "Koperasi Tani Makmur Sejahtera",
+  "thermalWidthMm": 80,
+  "idleLogoutMinutes": 60,
+  "env": "development"
+}
+
