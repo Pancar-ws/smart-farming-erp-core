@@ -8,7 +8,12 @@ import MembersPage from '../pages/master-data/MembersPage'
 import PricingCatalogPage from '../pages/master-data/PricingCatalogPage'
 import SaprotanPage from '../pages/master-data/SaprotanPage'
 import ModulePlaceholderPage from '../pages/placeholders/ModulePlaceholderPage'
+import HarvestReceiptPage from '../pages/procurement/HarvestReceiptPage'
+import SortingPage from '../pages/manufacturing/SortingPage'
 import SalesOrderPage from '../pages/sales/SalesOrderPage'
+import InventoryStockPage from '../pages/inventory/InventoryStockPage'
+import AccountingPage from '../pages/accounting/AccountingPage'
+import ReportsEsgPage from '../pages/reports/ReportsEsgPage'
 import ProtectedRoute from './ProtectedRoute'
 
 export default function AppRoutes() {
@@ -101,10 +106,7 @@ export default function AppRoutes() {
           path="/procurement/harvest"
           element={
             <ProtectedRoute requiredPermissions={['harvest:receive', 'harvest:read']}>
-              <ModulePlaceholderPage
-                title="Penerimaan Panen Anggota"
-                description="Halaman pencatatan penimbangan setoran panen anggota dan penerbitan nomor batch."
-              />
+              <HarvestReceiptPage />
             </ProtectedRoute>
           }
         />
@@ -113,10 +115,7 @@ export default function AppRoutes() {
           path="/manufacturing/sorting"
           element={
             <ProtectedRoute requiredPermissions={['mfg:sort', 'mfg:read', 'mfg:config']}>
-              <ModulePlaceholderPage
-                title="Sortasi & Grading Komoditas"
-                description="Halaman pemilahan hasil panen curah menjadi stok per kelas mutu (Grade A, Grade B, dan Afkir)."
-              />
+              <SortingPage />
             </ProtectedRoute>
           }
         />
@@ -132,10 +131,7 @@ export default function AppRoutes() {
                 'po:read',
               ]}
             >
-              <ModulePlaceholderPage
-                title="Manajemen Stok & Inventaris Gudang"
-                description="Halaman pemantauan stok gudang saprotan, gudang panen mentah, gudang barang jadi, dan penyaluran saprotan."
-              />
+              <InventoryStockPage />
             </ProtectedRoute>
           }
         />
@@ -144,10 +140,7 @@ export default function AppRoutes() {
           path="/accounting"
           element={
             <ProtectedRoute requiredPermissions={['acct:read', 'acct:post', 'acct:payment']}>
-              <ModulePlaceholderPage
-                title="Akuntansi, Pembayaran Anggota & SHU"
-                description="Halaman pengelolaan jurnal transaksi, pembayaran hasil panen anggota, laporan Laba Rugi, dan perhitungan SHU."
-              />
+              <AccountingPage />
             </ProtectedRoute>
           }
         />
@@ -156,10 +149,7 @@ export default function AppRoutes() {
           path="/reports/esg"
           element={
             <ProtectedRoute requiredPermissions={['report:esg', 'report:operational']}>
-              <ModulePlaceholderPage
-                title="Laporan Operasional & Dashboard ESG"
-                description="Halaman pelaporan indikator keberlanjutan lingkungan, sosial, tata kelola, serta pelacakan asal batch komoditas."
-              />
+              <ReportsEsgPage />
             </ProtectedRoute>
           }
         />
