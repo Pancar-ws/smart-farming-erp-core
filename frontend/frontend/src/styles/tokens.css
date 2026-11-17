@@ -1,0 +1,57 @@
+/* src/styles/tokens.css */
+:root {
+  --navy-50: #E4EDF5;
+  --navy-700: #1F4E79;
+  --navy-800: #173B5C;
+  --green-50: #E3F1E4;
+  --green-700: #2E7D32;
+  --amber-50: #FFF1DC;
+  --amber-600: #F57F17;
+  --amber-800: #8A4B00;
+  --coral-50: #FBE5E5;
+  --coral-700: #C62828;
+  --ink-900: #14232F;
+  --ink-600: #4A5A68;
+  --line: #D5DDE3;
+  --canvas: #EEF2F5;
+  --surface: #FFFFFF;
+
+  --radius-control: 4px;
+  --radius-panel: 8px;
+  --control-h: 40px;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --control-h: 52px;
+  }
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink-900);
+  font-family: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.num,
+td.num,
+.readout {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 3px solid var(--navy-700);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+

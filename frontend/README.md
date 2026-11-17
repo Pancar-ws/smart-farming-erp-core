@@ -1,0 +1,1 @@
+# smart-farming-erp-core
