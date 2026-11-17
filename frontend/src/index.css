@@ -1,0 +1,106 @@
+/* ==========================================================================
+   ERP Smart Farming - Enterprise Clean UI Theme
+   Palet Korporat Koperasi Tani:
+   - Deep Navy    : #1F4E79 (Header, Sidebar, Tombol Simpan Utama)
+   - Forest Green : #2E7D32 (Indikator Sukses, Mutu Grade A / Aktif)
+   - Amber        : #F57F17 (Peringatan Stok Minimum ROP / Menunggu)
+   - Coral Red    : #C62828 (Batal, Error, Pencatatan Afkir / Susut)
+   ========================================================================== */
+
+:root {
+  --color-navy: #1F4E79;
+  --color-navy-hover: #173B5C;
+  --color-navy-dark: #102A43;
+  --color-navy-soft: #E8F1F8;
+
+  --color-green: #2E7D32;
+  --color-green-hover: #246327;
+  --color-green-soft: #E8F5E9;
+
+  --color-amber: #F57F17;
+  --color-amber-hover: #D66B0E;
+  --color-amber-soft: #FFF8E1;
+
+  --color-red: #C62828;
+  --color-red-hover: #A31F1F;
+  --color-red-soft: #FFEBEE;
+
+  --bg-app: #F1F5F9;
+  --bg-surface: #FFFFFF;
+  --bg-muted: #F8FAFC;
+
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+
+  --border-color: #CBD5E1;
+  --border-subtle: #E2E8F0;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.14);
+
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text-primary);
+  background-color: var(--bg-app);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--color-navy);
+  text-decoration: none;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Touch-friendly scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #94A3B8;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #64748B;
+}
