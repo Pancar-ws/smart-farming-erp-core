@@ -1,0 +1,7 @@
+CREATE EXTENSION IF NOT EXISTS pg_trgm;       -- pencarian nama anggota/pelanggan
+
+CREATE DOMAIN d_qty   AS NUMERIC(14,3);
+CREATE DOMAIN d_money AS NUMERIC(16,2);
+CREATE DOMAIN d_pct   AS NUMERIC(6,2) CHECK (VALUE IS NULL OR (VALUE >= 0 AND VALUE <= 100));
+CREATE DOMAIN d_ratio AS NUMERIC(8,2);
+
