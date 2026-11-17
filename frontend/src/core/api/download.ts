@@ -12,8 +12,9 @@ export async function downloadReport(
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   const url = new URL(base + cleanPath, window.location.origin);
 
-  Object.entries({ ...query, format }).forEach(([k, v]) => {
-    if (v != null && v !== '') {
+  url.searchParams.set('format', format);
+  Object.entries(query).forEach(([k, v]) => {
+    if (v !== null && v !== undefined && String(v).trim() !== '') {
       url.searchParams.set(k, String(v));
     }
   });
