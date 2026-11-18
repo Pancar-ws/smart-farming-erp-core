@@ -7,6 +7,7 @@ import Modal from '../../components/Modal'
 import Table from '../../components/Table'
 import { useAuth } from '../../hooks/useAuth'
 import {
+  createProductApi,
   createSalesPriceApi,
   fetchCategoriesApi,
   fetchGradesByCategoryApi,
@@ -18,6 +19,7 @@ import { formatDateID, formatRupiah, todayISODate } from '../../utils/formatters
 
 export default function PricingCatalogPage() {
   const { hasPermission } = useAuth()
+  const canWriteMaster = hasPermission(['master:write'])
   const canWriteSalesPrice = hasPermission(['price:sales:write'])
 
   const [products, setProducts] = useState([])
@@ -29,6 +31,7 @@ export default function PricingCatalogPage() {
   const [loading, setLoading] = useState(true)
   const [banner, setBanner] = useState({ type: 'info', text: '' })
 
+  // Modal Atur Harga Jual
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState({
     product_id: '1',
@@ -39,6 +42,16 @@ export default function PricingCatalogPage() {
     note: '',
   })
   const [saving, setSaving] = useState(false)
+
+  // Modal Tambah Komoditas Produk Baru
+  const [productModalOpen, setProductModalOpen] = useState(false)
+  const [productForm, setProductForm] = useState({
+    code: '',
+    name: '',
+    category_id: '1',
+    uom: 'kg',
+  })
+  const [savingProduct, setSavingProduct] = useState(false)
 
   const loadAll = async () => {
     setLoading(true)
@@ -138,6 +151,47 @@ export default function PricingCatalogPage() {
     }
   }
 
+  const openProductModal = () => {
+    setProductForm({
+      code: '',
+      name: '',
+      category_id: categories[0] ? String(categories[0].id) : '1',
+      uom: 'kg',
+    })
+    setProductModalOpen(true)
+  }
+
+  const handleSaveProduct = async (e) => {
+    e.preventDefault()
+    if (!productForm.code.trim() || !productForm.name.trim()) {
+      setBanner({
+        type: 'danger',
+        text: 'Kode dan nama komoditas wajib diisi.',
+      })
+      return
+    }
+
+    setSavingProduct(true)
+    try {
+      const res = await createProductApi({
+        code: productForm.code,
+        name: productForm.name,
+        category_id: Number(productForm.category_id),
+        uom: productForm.uom,
+      })
+      setBanner({
+        type: 'success',
+        text: `Komoditas baru ${res.code} (${res.name}) berhasil ditambahkan ke katalog master!`,
+      })
+      setProductModalOpen(false)
+      loadAll()
+    } catch (err) {
+      setBanner({ type: 'danger', text: err.message || 'Gagal menambahkan komoditas.' })
+    } finally {
+      setSavingProduct(false)
+    }
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -149,11 +203,22 @@ export default function PricingCatalogPage() {
           </p>
         </div>
 
-        {canWriteSalesPrice && (
-          <Button variant="primary" onClick={openPriceModal}>
-            + Atur Harga Jual Segmen
-          </Button>
-        )}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {canWriteMaster && (
+            <Button
+              variant="primary"
+              onClick={openProductModal}
+              style={{ backgroundColor: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              🌱 + Tambah Komoditas Produk
+            </Button>
+          )}
+          {canWriteSalesPrice && (
+            <Button variant="outline" onClick={openPriceModal}>
+              + Atur Harga Jual Segmen
+            </Button>
+          )}
+        </div>
       </div>
 
       <AlertBanner
@@ -411,6 +476,71 @@ export default function PricingCatalogPage() {
             value={form.note}
             onChange={(e) => setForm({ ...form, note: e.target.value })}
             placeholder="Contoh: Penyesuaian harga kuartal berjalan"
+          />
+        </form>
+      </Modal>
+
+      {/* Modal Tambah Komoditas Produk Baru */}
+      <Modal
+        isOpen={productModalOpen}
+        onClose={() => setProductModalOpen(false)}
+        title="🌱 Tambah Komoditas Produk Baru"
+        primaryAction={{
+          label: savingProduct ? 'Menyimpan...' : 'Simpan Komoditas',
+          onClick: handleSaveProduct,
+          disabled: savingProduct || !productForm.code.trim() || !productForm.name.trim(),
+        }}
+        secondaryAction={{
+          label: 'Batal',
+          onClick: () => setProductModalOpen(false),
+        }}
+      >
+        <form onSubmit={handleSaveProduct} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <FormField
+            label="Kode Komoditas"
+            name="code"
+            value={productForm.code}
+            onChange={(e) => setProductForm({ ...productForm, code: e.target.value.toUpperCase() })}
+            placeholder="Contoh: TOMAT, JAGUNG, BAWANG"
+            hint="Gunakan kode kapital singkat (misal: TOMAT)"
+            required
+          />
+
+          <FormField
+            label="Nama Komoditas"
+            name="name"
+            value={productForm.name}
+            onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+            placeholder="Contoh: Tomat Buah Segar"
+            required
+          />
+
+          <FormField
+            label="Kategori Komoditas"
+            name="category_id"
+            type="select"
+            value={productForm.category_id}
+            onChange={(e) => setProductForm({ ...productForm, category_id: e.target.value })}
+            options={categories.map((c) => ({
+              value: String(c.id),
+              label: `${c.name}`,
+            }))}
+            hint="Kategori menentukan kriteria mutu dan kelas mutu grading otomatis"
+            required
+          />
+
+          <FormField
+            label="Satuan Standar (UoM)"
+            name="uom"
+            type="select"
+            value={productForm.uom}
+            onChange={(e) => setProductForm({ ...productForm, uom: e.target.value })}
+            options={[
+              { value: 'kg', label: 'Kilogram (kg)' },
+              { value: 'ton', label: 'Ton' },
+              { value: 'ikat', label: 'Ikat' },
+            ]}
+            required
           />
         </form>
       </Modal>

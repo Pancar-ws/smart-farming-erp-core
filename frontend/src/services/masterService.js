@@ -304,6 +304,18 @@ export async function fetchProductsApi() {
   })
 }
 
+export async function createProductApi(payload) {
+  return apiRequest('/master/products', {
+    method: 'POST',
+    body: {
+      code: payload.code.trim().toUpperCase(),
+      name: payload.name.trim(),
+      category_id: Number(payload.category_id),
+      uom: payload.uom || 'kg',
+    },
+  })
+}
+
 export async function fetchSalesPricesApi({ productId, segment } = {}) {
   const params = new URLSearchParams()
   if (productId) params.set('product_id', productId)
