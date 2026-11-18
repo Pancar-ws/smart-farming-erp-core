@@ -56,6 +56,7 @@ export const ROLE_META = {
       'po:write',
       'harvest:read',
       'master:write',
+      'price:purchase:write',
       'mfg:read',
       'report:operational',
     ],

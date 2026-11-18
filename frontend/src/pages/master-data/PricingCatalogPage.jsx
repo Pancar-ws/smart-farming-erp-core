@@ -8,6 +8,7 @@ import Table from '../../components/Table'
 import { useAuth } from '../../hooks/useAuth'
 import {
   createProductApi,
+  createPurchasePriceApi,
   createSalesPriceApi,
   fetchCategoriesApi,
   fetchGradesByCategoryApi,
@@ -21,6 +22,7 @@ export default function PricingCatalogPage() {
   const { hasPermission } = useAuth()
   const canWriteMaster = hasPermission(['master:write'])
   const canWriteSalesPrice = hasPermission(['price:sales:write'])
+  const canWritePurchasePrice = hasPermission(['price:purchase:write', 'master:write'])
 
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
@@ -42,6 +44,17 @@ export default function PricingCatalogPage() {
     note: '',
   })
   const [saving, setSaving] = useState(false)
+
+  // Modal Atur Harga Beli Anggota
+  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false)
+  const [purchaseForm, setPurchaseForm] = useState({
+    product_id: '1',
+    grade_id: '1',
+    price: '',
+    valid_from: todayISODate(),
+    note: '',
+  })
+  const [savingPurchasePrice, setSavingPurchasePrice] = useState(false)
 
   // Modal Tambah Komoditas Produk Baru
   const [productModalOpen, setProductModalOpen] = useState(false)
@@ -99,6 +112,11 @@ export default function PricingCatalogPage() {
     return prod && g.category_id === prod.category_id
   })
 
+  const availableGradesForPurchaseForm = Object.values(gradesMap).filter((g) => {
+    const prod = productLookup(purchaseForm.product_id)
+    return prod && g.category_id === prod.category_id
+  })
+
   const openPriceModal = () => {
     const firstProd = products[0]
     const firstGrade = Object.values(gradesMap).find(
@@ -113,6 +131,68 @@ export default function PricingCatalogPage() {
       note: 'Pembaruan harga jual segmen',
     })
     setModalOpen(true)
+  }
+
+  const openPurchasePriceModal = (preselectedProductId = null) => {
+    const targetProd = preselectedProductId
+      ? productLookup(preselectedProductId)
+      : products[0]
+    const prodId = targetProd ? String(targetProd.id) : (products[0] ? String(products[0].id) : '1')
+    const gradesForCat = Object.values(gradesMap).filter((g) => targetProd && g.category_id === targetProd.category_id)
+    const firstGrade = gradesForCat[0]
+
+    setPurchaseForm({
+      product_id: prodId,
+      grade_id: firstGrade ? String(firstGrade.id) : '',
+      price: firstGrade?.is_reject ? '0' : '',
+      valid_from: todayISODate(),
+      note: 'Penetapan harga beli panen anggota',
+    })
+    setPurchaseModalOpen(true)
+  }
+
+  const handleSavePurchasePrice = async (e) => {
+    e.preventDefault()
+    const selectedGrade = gradesMap[Number(purchaseForm.grade_id)]
+    const priceNum = Number(purchaseForm.price)
+
+    if (selectedGrade?.is_reject && priceNum !== 0) {
+      setBanner({
+        type: 'danger',
+        text: 'Harga untuk grade afkir wajib bernilai Rp 0 (Zero Value Rule).',
+      })
+      return
+    }
+
+    if (isNaN(priceNum) || priceNum < 0) {
+      setBanner({
+        type: 'danger',
+        text: 'Harga beli harus berupa angka valid dan tidak boleh negatif.',
+      })
+      return
+    }
+
+    setSavingPurchasePrice(true)
+    try {
+      await createPurchasePriceApi({
+        product_id: Number(purchaseForm.product_id),
+        grade_id: Number(purchaseForm.grade_id),
+        price: priceNum,
+        valid_from: purchaseForm.valid_from,
+        note: purchaseForm.note.trim() || null,
+      })
+      const prod = productLookup(purchaseForm.product_id)
+      setBanner({
+        type: 'success',
+        text: `Harga beli anggota untuk ${prod?.name || 'Komoditas'} (${selectedGrade?.code}) berhasil ditetapkan: ${formatRupiah(priceNum)}/kg.`,
+      })
+      setPurchaseModalOpen(false)
+      loadAll()
+    } catch (err) {
+      setBanner({ type: 'danger', text: err.message || 'Gagal menyimpan harga beli anggota.' })
+    } finally {
+      setSavingPurchasePrice(false)
+    }
   }
 
   const handleSavePrice = async (e) => {
@@ -213,6 +293,15 @@ export default function PricingCatalogPage() {
               🌱 + Tambah Komoditas Produk
             </Button>
           )}
+          {canWritePurchasePrice && (
+            <Button
+              variant="primary"
+              onClick={() => openPurchasePriceModal()}
+              style={{ backgroundColor: '#2563eb', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              💰 + Atur Harga Beli Anggota
+            </Button>
+          )}
           {canWriteSalesPrice && (
             <Button variant="outline" onClick={openPriceModal}>
               + Atur Harga Jual Segmen
@@ -276,16 +365,41 @@ export default function PricingCatalogPage() {
               header: 'Harga Beli Anggota',
               render: (r) => {
                 const pList = purchasePrices.filter((pp) => pp.product_id === r.id)
+                // Ambil harga beli terbaru per grade_id
+                const latestByGrade = {}
+                pList.forEach((pp) => {
+                  if (!latestByGrade[pp.grade_id]) {
+                    latestByGrade[pp.grade_id] = pp
+                  }
+                })
+                const activePrices = Object.values(latestByGrade)
+
                 return (
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {pList.map((pp) => {
-                      const g = gradesMap[pp.grade_id]
-                      return (
-                        <Badge key={pp.id} variant={g?.is_reject ? 'red' : 'green'}>
-                          {g?.code}: {formatRupiah(pp.price)}/{r.uom}
-                        </Badge>
-                      )
-                    })}
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {activePrices.length > 0 ? (
+                      activePrices.map((pp) => {
+                        const g = gradesMap[pp.grade_id]
+                        return (
+                          <Badge key={pp.id} variant={g?.is_reject ? 'red' : 'green'}>
+                            {g?.code || g?.name}: {formatRupiah(pp.price)}/{r.uom}
+                          </Badge>
+                        )
+                      })
+                    ) : (
+                      <span style={{ color: '#94a3b8', fontSize: '13px', fontStyle: 'italic' }}>
+                        Belum ada harga beli
+                      </span>
+                    )}
+                    {canWritePurchasePrice && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => openPurchasePriceModal(r.id)}
+                        style={{ padding: '2px 8px', fontSize: '12px', border: '1px dashed #cbd5e1' }}
+                      >
+                        + Set Harga
+                      </Button>
+                    )}
                   </div>
                 )
               },
@@ -547,6 +661,108 @@ export default function PricingCatalogPage() {
               { value: 'ikat', label: 'Ikat' },
             ]}
             required
+          />
+        </form>
+      </Modal>
+
+      {/* Modal Atur Harga Beli Anggota */}
+      <Modal
+        isOpen={purchaseModalOpen}
+        onClose={() => setPurchaseModalOpen(false)}
+        title="💰 Atur Standar Harga Beli Petani Anggota"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPurchaseModalOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSavePurchasePrice}
+              disabled={savingPurchasePrice || purchaseForm.price === ''}
+              style={{ backgroundColor: '#2563eb' }}
+            >
+              {savingPurchasePrice ? 'Menyimpan...' : 'Simpan Harga Beli'}
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleSavePurchasePrice} className="form-grid">
+          <FormField
+            label="Komoditas"
+            name="product_id"
+            type="select"
+            value={purchaseForm.product_id}
+            onChange={(e) => {
+              const pid = e.target.value
+              const prod = productLookup(pid)
+              const firstGrade = Object.values(gradesMap).find(
+                (g) => prod && g.category_id === prod.category_id
+              )
+              setPurchaseForm({
+                ...purchaseForm,
+                product_id: pid,
+                grade_id: firstGrade ? String(firstGrade.id) : '',
+                price: firstGrade?.is_reject ? '0' : '',
+              })
+            }}
+            options={products.map((p) => ({ value: String(p.id), label: `${p.code} - ${p.name}` }))}
+            required
+          />
+
+          <FormField
+            label="Kelas Mutu (Grade)"
+            name="grade_id"
+            type="select"
+            value={purchaseForm.grade_id}
+            onChange={(e) => {
+              const gid = e.target.value
+              const g = gradesMap[Number(gid)]
+              setPurchaseForm({
+                ...purchaseForm,
+                grade_id: gid,
+                price: g?.is_reject ? '0' : purchaseForm.price,
+              })
+            }}
+            options={availableGradesForPurchaseForm.map((g) => ({
+              value: String(g.id),
+              label: `${g.code} - ${g.name}${g.is_reject ? ' (Limbah/Afkir)' : ''}`,
+            }))}
+            required
+          />
+
+          <FormField
+            label="Harga Beli per Satuan (Rp)"
+            name="price"
+            type="number"
+            min="0"
+            step="100"
+            value={purchaseForm.price}
+            onChange={(e) => setPurchaseForm({ ...purchaseForm, price: e.target.value })}
+            placeholder="Contoh: 12500"
+            required
+            readOnly={Boolean(gradesMap[Number(purchaseForm.grade_id)]?.is_reject)}
+            hint={
+              gradesMap[Number(purchaseForm.grade_id)]?.is_reject
+                ? 'Sesuai Zero Value Rule (standar akuntansi), mutu Afkir wajib bernilai Rp 0.'
+                : 'Harga patokan dasar pembelian hasil panen dari petani saat disortir dan ditimbang.'
+            }
+          />
+
+          <FormField
+            label="Berlaku Mulai Tanggal"
+            name="valid_from"
+            type="date"
+            value={purchaseForm.valid_from}
+            onChange={(e) => setPurchaseForm({ ...purchaseForm, valid_from: e.target.value })}
+            required
+          />
+
+          <FormField
+            label="Catatan / Nomor SK"
+            name="note"
+            value={purchaseForm.note}
+            onChange={(e) => setPurchaseForm({ ...purchaseForm, note: e.target.value })}
+            placeholder="Contoh: SK Penetapan Harga Musim Panen Q4 2026"
           />
         </form>
       </Modal>

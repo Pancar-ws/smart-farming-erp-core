@@ -363,3 +363,25 @@ export async function fetchPurchasePricesApi(productId) {
     return list.sort((a, b) => b.valid_from.localeCompare(a.valid_from) || b.id - a.id)
   })
 }
+
+export async function createPurchasePriceApi(payload) {
+  return apiRequest('/master/purchase-prices', { method: 'POST', body: payload }, async () => {
+    const db = getMockDB()
+    const grade = (db.grades || []).find((g) => g.id === Number(payload.grade_id))
+    if (grade?.is_reject && Number(payload.price) !== 0) {
+      throw new ApiError('Harga grade Afkir wajib bernilai Rp0 (Zero Value Rule)', 422, 'REJECT_PRICE')
+    }
+    const nextId = (db.purchasePrices || []).reduce((max, p) => Math.max(max, p.id), 0) + 1
+    const rec = {
+      id: nextId,
+      product_id: Number(payload.product_id),
+      grade_id: Number(payload.grade_id),
+      price: Number(payload.price),
+      valid_from: payload.valid_from || todayISODate(),
+      note: payload.note || '',
+    }
+    db.purchasePrices.unshift(rec)
+    saveMockDB(db)
+    return rec
+  })
+}
