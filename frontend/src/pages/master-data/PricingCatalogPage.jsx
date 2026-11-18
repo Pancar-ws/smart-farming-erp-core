@@ -485,15 +485,21 @@ export default function PricingCatalogPage() {
         isOpen={productModalOpen}
         onClose={() => setProductModalOpen(false)}
         title="🌱 Tambah Komoditas Produk Baru"
-        primaryAction={{
-          label: savingProduct ? 'Menyimpan...' : 'Simpan Komoditas',
-          onClick: handleSaveProduct,
-          disabled: savingProduct || !productForm.code.trim() || !productForm.name.trim(),
-        }}
-        secondaryAction={{
-          label: 'Batal',
-          onClick: () => setProductModalOpen(false),
-        }}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setProductModalOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSaveProduct}
+              disabled={savingProduct || !productForm.code.trim() || !productForm.name.trim()}
+              style={{ backgroundColor: '#166534' }}
+            >
+              {savingProduct ? 'Menyimpan...' : 'Simpan Komoditas'}
+            </Button>
+          </>
+        }
       >
         <form onSubmit={handleSaveProduct} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <FormField

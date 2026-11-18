@@ -11,6 +11,11 @@ import {
   fetchSortingOrdersApi,
   postSortingOrderApi,
 } from '../../services/manufacturingService'
+import {
+  fetchCategoriesApi,
+  fetchGradesByCategoryApi,
+  fetchProductsApi,
+} from '../../services/masterService'
 import { fetchHarvestReceiptsApi } from '../../services/procurementService'
 import { formatDateTimeID, formatKg, todayISODate } from '../../utils/formatters'
 
@@ -21,6 +26,8 @@ export default function SortingPage() {
   // Master / Reference data
   const [harvestReceipts, setHarvestReceipts] = useState([])
   const [sortingOrders, setSortingOrders] = useState([])
+  const [products, setProducts] = useState([])
+  const [allGrades, setAllGrades] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
@@ -71,12 +78,21 @@ export default function SortingPage() {
     async function loadData() {
       setLoading(true)
       try {
-        const [rcvData, sortData] = await Promise.all([
+        const [rcvData, sortData, prodData, catData] = await Promise.all([
           fetchHarvestReceiptsApi().catch(() => []),
           fetchSortingOrdersApi().catch(() => []),
+          fetchProductsApi().catch(() => []),
+          fetchCategoriesApi().catch(() => []),
         ])
         setHarvestReceipts(rcvData || [])
         setSortingOrders(sortData || [])
+        setProducts(prodData || [])
+
+        // Muat seluruh definisi grade untuk semua kategori komoditas
+        const gradesNested = await Promise.all(
+          (catData || []).map((c) => fetchGradesByCategoryApi(c.id).catch(() => []))
+        )
+        setAllGrades(gradesNested.flat())
 
         if (rcvData && rcvData.length > 0) {
           const first = rcvData[0]
@@ -105,6 +121,41 @@ export default function SortingPage() {
     }
     loadData()
   }, [])
+
+  // Helper resolusi komoditas & grade mutu terpilih
+  const selectedReceipt = useMemo(() => {
+    return harvestReceipts.find((r) => String(r.id) === String(selectedReceiptId))
+  }, [harvestReceipts, selectedReceiptId])
+
+  const selectedProduct = useMemo(() => {
+    if (!selectedReceipt) return null
+    return products.find((p) => p.id === selectedReceipt.product_id)
+  }, [selectedReceipt, products])
+
+  const currentCategoryGrades = useMemo(() => {
+    const catId = selectedProduct?.category_id || 1
+    return allGrades.filter((g) => g.category_id === catId)
+  }, [selectedProduct, allGrades])
+
+  const gradeAObj = useMemo(() => {
+    return (
+      currentCategoryGrades.find((g) => !g.is_reject && (g.code === 'A' || g.code === 'Premium')) ||
+      currentCategoryGrades.filter((g) => !g.is_reject)[0] ||
+      null
+    )
+  }, [currentCategoryGrades])
+
+  const gradeBObj = useMemo(() => {
+    return (
+      currentCategoryGrades.find((g) => !g.is_reject && (g.code === 'B' || g.code === 'Medium')) ||
+      currentCategoryGrades.filter((g) => !g.is_reject)[1] ||
+      null
+    )
+  }, [currentCategoryGrades])
+
+  const gradeAfkirObj = useMemo(() => {
+    return currentCategoryGrades.find((g) => g.is_reject) || null
+  }, [currentCategoryGrades])
 
   // Handler saat operator memilih batch panen yang berbeda
   const handleSelectReceipt = (receiptIdStr) => {
@@ -141,6 +192,17 @@ export default function SortingPage() {
     setNotif(null)
 
     try {
+      const outputs = []
+      if (gradeAObj && parseFloat(mutuA) > 0) {
+        outputs.push({ grade_id: gradeAObj.id, qty: parseFloat(mutuA) })
+      }
+      if (gradeBObj && parseFloat(mutuB) > 0) {
+        outputs.push({ grade_id: gradeBObj.id, qty: parseFloat(mutuB) })
+      }
+      if (gradeAfkirObj && parseFloat(afkir) > 0) {
+        outputs.push({ grade_id: gradeAfkirObj.id, qty: parseFloat(afkir) })
+      }
+
       const payload = {
         process_date: processDate,
         note: note || `Sortasi batch ${batchCode}`,
@@ -148,11 +210,7 @@ export default function SortingPage() {
           {
             harvest_receipt_id: Number(selectedReceiptId || 1),
             qty_input: inputCurahNum,
-            outputs: [
-              { grade_id: 1, qty: parseFloat(mutuA) || 0 }, // Mutu A
-              { grade_id: 2, qty: parseFloat(mutuB) || 0 }, // Mutu B
-              { grade_id: 3, qty: parseFloat(afkir) || 0 }, // Afkir
-            ],
+            outputs: outputs,
           },
         ],
       }
@@ -166,9 +224,10 @@ export default function SortingPage() {
         setNotif({
           type: 'success',
           title: 'Sortasi Berhasil Diproses & Ter-posting!',
-          message: `Nomor Order: ${res.order_no} berhasil dikunci dan stok barang jadi (Grade A: ${mutuA} kg, Grade B: ${mutuB} kg) masuk ke gudang FIFO GD-JADI.`,
+          message: `Nomor Order: ${res.order_no} berhasil dikunci dan stok barang jadi (${gradeAObj?.code || 'A'}: ${mutuA} kg, ${gradeBObj?.code || 'B'}: ${mutuB} kg) masuk ke gudang FIFO GD-JADI.`,
         })
-      } catch {
+      } catch (postErr) {
+        console.error('Post sorting error:', postErr)
         setNotif({
           type: 'success',
           title: 'Hasil Sortasi Berhasil Disimpan (Status: Draft)',
@@ -179,6 +238,8 @@ export default function SortingPage() {
       // Refresh tabel
       const updated = await fetchSortingOrdersApi().catch(() => [])
       setSortingOrders(updated)
+      const updatedReceipts = await fetchHarvestReceiptsApi().catch(() => [])
+      setHarvestReceipts(updatedReceipts)
     } catch (err) {
       setNotif({
         type: 'error',
@@ -367,10 +428,10 @@ export default function SortingPage() {
                   <tbody>
                     <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
                       <td style={{ padding: '10px 14px', fontWeight: 600, color: 'var(--color-green)' }}>
-                        Mutu A (Super / Modern)
+                        {gradeAObj ? `${gradeAObj.code} — ${gradeAObj.name}` : 'Mutu A (Super / Modern)'}
                       </td>
                       <td style={{ padding: '10px 14px', fontSize: '12.5px', color: '#64748b' }}>
-                        Kadar air &lt; 14%, fisik mulus tanpa cacat
+                        Standar kualitas utama / pasar modern
                       </td>
                       <td style={{ padding: '6px 14px' }}>
                         <input
@@ -387,10 +448,10 @@ export default function SortingPage() {
 
                     <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
                       <td style={{ padding: '10px 14px', fontWeight: 600, color: '#0284c7' }}>
-                        Mutu B (Tradisional)
+                        {gradeBObj ? `${gradeBObj.code} — ${gradeBObj.name}` : 'Mutu B (Tradisional)'}
                       </td>
                       <td style={{ padding: '10px 14px', fontSize: '12.5px', color: '#64748b' }}>
-                        Standar konsumsi umum pasar lokal
+                        Standar konsumsi umum / pasar lokal
                       </td>
                       <td style={{ padding: '6px 14px' }}>
                         <input
@@ -405,32 +466,12 @@ export default function SortingPage() {
                       </td>
                     </tr>
 
-                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '10px 14px', fontWeight: 600, color: '#d97706' }}>
-                        Mutu C (Ekonomis)
-                      </td>
-                      <td style={{ padding: '10px 14px', fontSize: '12.5px', color: '#64748b' }}>
-                        Ukuran kecil / olahan bumbu pasta
-                      </td>
-                      <td style={{ padding: '6px 14px' }}>
-                        <input
-                          type="number"
-                          step="0.01"
-                          className="form-control"
-                          value={mutuC || ''}
-                          onChange={(e) => setMutuC(parseFloat(e.target.value) || 0)}
-                          style={{ fontWeight: 600, padding: '8px' }}
-                          disabled={!canSort || submitting}
-                        />
-                      </td>
-                    </tr>
-
                     <tr style={{ backgroundColor: '#fff5f5' }}>
                       <td style={{ padding: '10px 14px', fontWeight: 700, color: '#dc2626' }}>
-                        Afkir (Susut / Reject)
+                        {gradeAfkirObj ? `${gradeAfkirObj.code} — ${gradeAfkirObj.name}` : 'Afkir (Susut / Reject)'}
                       </td>
                       <td style={{ padding: '10px 14px', fontSize: '12.5px', color: '#991b1b' }}>
-                        Busuk / rusak (dialihkan ke kompos)
+                        Rusak, busuk, patah tinggi (nilai Rp 0)
                       </td>
                       <td style={{ padding: '6px 14px' }}>
                         <input
