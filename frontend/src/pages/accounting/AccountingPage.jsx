@@ -36,7 +36,7 @@ export default function AccountingPage() {
           fetchIncomeStatementApi().catch(() => null),
         ])
         setJournals(jrnData || [])
-        setMargins(mrgData || [])
+        setMargins(Array.isArray(mrgData) ? mrgData : (mrgData?.items || []))
         setIncomeStatement(incData)
       } catch (err) {
         setNotif({
@@ -148,26 +148,28 @@ export default function AccountingPage() {
       cell: (row) => (
         <div>
           <strong style={{ display: 'block', color: 'var(--color-navy)' }}>{row.batch_code}</strong>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{row.product}</span>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+            {row.product || (row.grade ? `Cabai Rawit (Grade ${row.grade})` : 'Cabai Rawit Merah')}
+          </span>
         </div>
       ),
     },
     {
       header: 'Nilai Penjualan (Revenue)',
-      accessor: 'revenue',
-      cell: (row) => formatRupiah(row.revenue),
+      accessor: 'penjualan',
+      cell: (row) => formatRupiah(row.penjualan ?? row.revenue),
     },
     {
       header: 'Harga Pokok Penjualan (HPP)',
-      accessor: 'cogs',
-      cell: (row) => formatRupiah(row.cogs),
+      accessor: 'harga_beli',
+      cell: (row) => formatRupiah(row.harga_beli ?? row.cogs),
     },
     {
       header: 'Gross Margin (Selisih Kotor)',
-      accessor: 'gross_margin',
+      accessor: 'margin_kotor',
       cell: (row) => (
         <strong style={{ color: 'var(--color-green)', fontSize: '15px' }}>
-          {formatRupiah(row.gross_margin)}
+          {formatRupiah(row.margin_kotor ?? row.gross_margin)}
         </strong>
       ),
     },
@@ -175,8 +177,8 @@ export default function AccountingPage() {
       header: 'Persentase Margin',
       accessor: 'margin_pct',
       cell: (row) => (
-        <Badge variant={row.margin_pct >= 15 ? 'green' : 'amber'}>
-          {row.margin_pct}%
+        <Badge variant={Number(row.margin_pct) >= 15 ? 'green' : 'amber'}>
+          {Number(row.margin_pct).toFixed(2)}%
         </Badge>
       ),
     },
@@ -289,14 +291,14 @@ export default function AccountingPage() {
               <div className="card" style={{ padding: '20px', borderLeft: '4px solid #0284c7' }}>
                 <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Total Pendapatan Usaha</span>
                 <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-navy)', marginTop: '4px' }}>
-                  {formatRupiah(incomeStatement.revenue)}
+                  {formatRupiah(incomeStatement.total_revenue ?? incomeStatement.revenue)}
                 </div>
               </div>
 
               <div className="card" style={{ padding: '20px', borderLeft: '4px solid #d97706' }}>
                 <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Harga Pokok Penjualan (HPP)</span>
                 <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-navy)', marginTop: '4px' }}>
-                  {formatRupiah(incomeStatement.cogs)}
+                  {formatRupiah(incomeStatement.total_expense ?? incomeStatement.cogs)}
                 </div>
               </div>
 
@@ -310,7 +312,7 @@ export default function AccountingPage() {
               <div className="card" style={{ padding: '20px', borderLeft: '4px solid var(--color-teal)' }}>
                 <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Laba Bersih Sebelum SHU</span>
                 <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-teal)', marginTop: '4px' }}>
-                  {formatRupiah(incomeStatement.net_profit)}
+                  {formatRupiah(incomeStatement.net_income ?? incomeStatement.net_profit)}
                 </div>
               </div>
             </div>
