@@ -129,3 +129,57 @@ def receive_goods(db: Session, user, data: GoodsReceiptCreate) -> GoodsReceipt:
     )
     return gr
 
+def quick_restock_saprotan(db: Session, user, data) -> dict:
+    from app.modules.master.models import SaprotanItem
+    item = db.get(SaprotanItem, data.saprotan_id)
+    if not item:
+        raise DomainError("NOT_FOUND", "Item saprotan tidak ditemukan", 404)
+
+    supplier_id = data.supplier_id
+    if not supplier_id:
+        if item.type in ("PUPUK_ORGANIK", "PUPUK_KIMIA"):
+            supplier_id = 1
+        elif item.type == "BENIH":
+            supplier_id = 2
+        elif item.type == "KEMASAN":
+            supplier_id = 3
+        else:
+            supplier_id = 1
+
+    unit_price = data.unit_price if data.unit_price is not None else item.purchase_price
+    today = date.today()
+
+    # 1. Buat PO
+    from .schemas import PurchaseOrderCreate, POLineIn, GoodsReceiptCreate, GRLineIn
+    po_in = PurchaseOrderCreate(
+        supplier_id=supplier_id,
+        order_date=today,
+        expected_date=today,
+        note=data.note or f"Pengadaan restock saprotan {item.name}",
+        lines=[POLineIn(saprotan_id=item.id, qty=data.qty, unit_price=unit_price)],
+    )
+    po = create_po(db, user, po_in)
+
+    # 2. Approve PO
+    po = approve_po(db, user, po.id)
+
+    # 3. Catat Goods Receipt di Gudang GD-SAP
+    gr_in = GoodsReceiptCreate(
+        po_id=po.id,
+        warehouse_id=data.warehouse_id,
+        received_date=today,
+        note=data.note or f"Penerimaan pengadaan {item.name}",
+        lines=[GRLineIn(po_line_id=po.lines[0].id, qty_received=data.qty)],
+    )
+    gr = receive_goods(db, user, gr_in)
+
+    return {
+        "status": "SUCCESS",
+        "po_no": po.po_no,
+        "gr_no": gr.gr_no,
+        "item_name": item.name,
+        "qty_received": str(data.qty),
+        "warehouse_id": data.warehouse_id,
+        "total": str(data.qty * unit_price),
+    }
+

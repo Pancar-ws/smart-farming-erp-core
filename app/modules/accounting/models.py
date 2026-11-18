@@ -20,6 +20,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.audit import Auditable
 from app.core.database import Base
+from app.modules.master.models import Member
 
 Money = Numeric(16, 2)
 

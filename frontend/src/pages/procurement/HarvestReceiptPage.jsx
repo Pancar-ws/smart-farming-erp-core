@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import QRCode from 'qrcode'
 import AlertBanner from '../../components/AlertBanner'
 import Badge from '../../components/Badge'
 import Button from '../../components/Button'
@@ -36,6 +37,61 @@ export default function HarvestReceiptPage() {
   const [scaleStatus, setScaleStatus] = useState({ active: false, mode: 'ready', message: '' })
   const [lastReceipt, setLastReceipt] = useState(null)
   const [printModalOpen, setPrintModalOpen] = useState(false)
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('')
+
+  // Cari detail Petani dan Komoditas untuk struk timbang
+  const selectedMember = useMemo(() => {
+    if (!lastReceipt) return null
+    return (
+      members.find(
+        (m) =>
+          m.id === lastReceipt.member_id ||
+          (m.member_code || m.code) === lastReceipt.member_code ||
+          (m.member_code || m.code) === lastReceipt.memberCode
+      ) || null
+    )
+  }, [lastReceipt, members])
+
+  const selectedProduct = useMemo(() => {
+    if (!lastReceipt) return null
+    return (
+      products.find(
+        (p) =>
+          p.id === lastReceipt.product_id ||
+          p.id === Number(lastReceipt.productId)
+      ) || null
+    )
+  }, [lastReceipt, products])
+
+  // Generator QR Code Scannable saat modal dibuka
+  useEffect(() => {
+    if (!lastReceipt || !printModalOpen) {
+      setQrCodeDataUrl('')
+      return
+    }
+
+    const payload = JSON.stringify({
+      resi: lastReceipt.receipt_no,
+      batch: lastReceipt.batch_code,
+      petani: selectedMember?.name || `ID:${lastReceipt.member_id || lastReceipt.member_code || '-'}`,
+      komoditas: selectedProduct?.name || 'Cabai Merah Keriting',
+      netto_kg: lastReceipt.net_kg,
+      waktu: lastReceipt.received_at || new Date().toISOString(),
+    })
+
+    QRCode.toDataURL(payload, {
+      width: 140,
+      margin: 1,
+      color: {
+        dark: '#0f172a',
+        light: '#ffffff',
+      },
+    })
+      .then((url) => setQrCodeDataUrl(url))
+      .catch((err) => {
+        console.warn('Gagal generate QR Code via library:', err)
+      })
+  }, [lastReceipt, printModalOpen, selectedMember, selectedProduct])
 
   // Kalkulasi Netto otomatis
   const netKg = useMemo(() => {
@@ -235,7 +291,11 @@ export default function HarvestReceiptPage() {
       setTareKg('0')
       setMoisturePct('')
 
-      setLastReceipt(res)
+      setLastReceipt({
+        ...res,
+        ...payload,
+        received_at: new Date().toISOString(),
+      })
       setNotif({
         type: 'success',
         title: 'Setoran Panen Berhasil Dicatat!',
@@ -617,47 +677,267 @@ export default function HarvestReceiptPage() {
         />
       </div>
 
-      {/* Modal Simulasi Cetak Bukti Timbang */}
+      {/* Modal Cetak Bukti Timbang Resmi */}
       {printModalOpen && lastReceipt && (
         <Modal
           title="Pratinjau Bukti Timbang Panen"
           isOpen={printModalOpen}
           onClose={() => setPrintModalOpen(false)}
         >
-          <div style={{ padding: '16px', border: '1px dashed #cbd5e1', borderRadius: '8px', backgroundColor: '#fdfdfd' }}>
-            <div style={{ textAlign: 'center', borderBottom: '2px solid #000', paddingBottom: '10px', marginBottom: '16px' }}>
-              <h2 style={{ margin: 0, fontSize: '18px' }}>KOPERASI SMART FARMING ERP</h2>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>BUKTI TIMBANG PENERIMAAN PANEN CURAH</div>
-            </div>
+          {/* Print Style Injector */}
+          <style>{`
+            @media print {
+              body * {
+                visibility: hidden;
+              }
+              #nota-timbang-print, #nota-timbang-print * {
+                visibility: visible;
+              }
+              #nota-timbang-print {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 20px;
+                background: #ffffff !important;
+                border: none !important;
+                box-shadow: none !important;
+              }
+            }
+          `}</style>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px', marginBottom: '16px' }}>
-              <div><strong>Nomor Resi:</strong> {lastReceipt.receipt_no}</div>
-              <div><strong>Nomor Batch:</strong> {lastReceipt.batch_code}</div>
-              <div><strong>Berat Bersih:</strong> {lastReceipt.net_kg} kg</div>
-              <div><strong>Gudang:</strong> GD-MTH (Curah)</div>
-            </div>
-
-            <div style={{ textAlign: 'center', margin: '20px 0', padding: '12px', backgroundColor: '#f1f5f9', borderRadius: '6px' }}>
-              <div style={{ fontSize: '24px', letterSpacing: '4px' }}>▪️▪️ [QR CODE BATCH] ▪️▪️</div>
-              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
-                Payload: BATCH:{lastReceipt.batch_code}
+          <div
+            id="nota-timbang-print"
+            style={{
+              padding: '24px',
+              border: '2px solid #0f172a',
+              borderRadius: '8px',
+              backgroundColor: '#ffffff',
+              color: '#0f172a',
+              fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+            }}
+          >
+            {/* Header Resmi Koperasi */}
+            <div
+              style={{
+                textAlign: 'center',
+                borderBottom: '3px double #0f172a',
+                paddingBottom: '12px',
+                marginBottom: '16px',
+              }}
+            >
+              <div style={{ fontSize: '11px', letterSpacing: '2px', fontWeight: 700, color: '#166534', textTransform: 'uppercase' }}>
+                Koperasi Tani Mandiri Smart Farming
+              </div>
+              <h2 style={{ margin: '4px 0 2px 0', fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>
+                BUKTI TIMBANG PENERIMAAN PANEN CURAH
+              </h2>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>
+                Unit Pengadaan & Logistik Panen Mentah (GD-MTH) • Kawasan Agribisnis Terpadu
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-              <Button variant="outline" onClick={() => setPrintModalOpen(false)}>
-                Tutup
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  window.print()
-                  setPrintModalOpen(false)
+            {/* Nomor Dokumen & Waktu */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                backgroundColor: '#f8fafc',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                marginBottom: '14px',
+                border: '1px solid #e2e8f0',
+              }}
+            >
+              <div>
+                <strong>No. Resi:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{lastReceipt.receipt_no}</span>
+              </div>
+              <div>
+                <strong>Waktu Timbang:</strong> {formatDateTimeID(lastReceipt.received_at || new Date().toISOString())}
+              </div>
+            </div>
+
+            {/* Identitas Petani & Komoditas */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '12px',
+                fontSize: '12.5px',
+                marginBottom: '16px',
+                lineHeight: 1.6,
+              }}
+            >
+              <div>
+                <div style={{ color: '#64748b', fontSize: '11px', textTransform: 'uppercase', fontWeight: 600 }}>
+                  Petani Penyetor
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '14px', color: '#0f172a' }}>
+                  {selectedMember ? `${selectedMember.member_code || selectedMember.code} - ${selectedMember.name}` : (lastReceipt.member_code || `Petani #${lastReceipt.member_id}`)}
+                </div>
+                <div style={{ fontSize: '12px', color: '#475569' }}>
+                  Komoditas: <strong>{selectedProduct ? `${selectedProduct.code} - ${selectedProduct.name}` : 'Cabai Merah Keriting'}</strong>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ color: '#64748b', fontSize: '11px', textTransform: 'uppercase', fontWeight: 600 }}>
+                  Lokasi Penyimpanan
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '13px' }}>
+                  Gudang Panen Mentah (GD-MTH)
+                </div>
+                <div style={{ fontSize: '12px', color: '#166534', fontWeight: 600 }}>
+                  ✓ Status: Siap Masuk Jalur Sortasi
+                </div>
+              </div>
+            </div>
+
+            {/* Tabel Rincian Bobot Timbangan */}
+            <div style={{ marginBottom: '16px', border: '1px solid #cbd5e1', borderRadius: '6px', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '1px solid #cbd5e1', textAlign: 'left' }}>
+                    <th style={{ padding: '8px 12px' }}>Parameter Penimbangan</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'right' }}>Nilai Ukur</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '8px 12px', color: '#475569' }}>Berat Bruto / Kotor</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600 }}>
+                      {formatKg(lastReceipt.gross_kg || lastReceipt.net_kg)}
+                    </td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '8px 12px', color: '#475569' }}>Berat Tara (Wadah / Keranjang)</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600 }}>
+                      {formatKg(lastReceipt.tare_kg || 0)}
+                    </td>
+                  </tr>
+                  {lastReceipt.moisture_pct != null && (
+                    <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '8px 12px', color: '#475569' }}>Kadar Air (Moisture Content)</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600 }}>
+                        {lastReceipt.moisture_pct}%
+                      </td>
+                    </tr>
+                  )}
+                  <tr style={{ backgroundColor: '#f0fdf4' }}>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: '#166534', fontSize: '14px' }}>
+                      BERAT BERSIH (NETTO MASUK GUDANG)
+                    </td>
+                    <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, color: '#166534', fontSize: '18px' }}>
+                      {formatKg(lastReceipt.net_kg)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Bagian Traceability: QR Code & Batch Identitas */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                padding: '12px 14px',
+                backgroundColor: '#f8fafc',
+                borderRadius: '6px',
+                border: '1px dashed #94a3b8',
+                marginBottom: '16px',
+              }}
+            >
+              <div
+                style={{
+                  width: '90px',
+                  height: '90px',
+                  backgroundColor: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '4px',
+                  flexShrink: 0,
                 }}
               >
-                🖨️ Cetak ke Mesin Printer
-              </Button>
+                {qrCodeDataUrl ? (
+                  <img src={qrCodeDataUrl} alt="QR Code Batch" style={{ width: '84px', height: '84px' }} />
+                ) : (
+                  <div style={{ fontSize: '10px', textAlign: 'center', color: '#94a3b8' }}>Memuat QR...</div>
+                )}
+              </div>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>
+                  Nomor Batch Ketertelusuran (Traceability ID)
+                </div>
+                <div
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: 800,
+                    fontFamily: 'monospace',
+                    color: '#0284c7',
+                    letterSpacing: '0.5px',
+                    margin: '2px 0',
+                  }}
+                >
+                  {lastReceipt.batch_code}
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b', lineHeight: 1.4 }}>
+                  Pindai kode QR untuk memvalidasi asal kebun, ketertelusuran rantai pasok panen, dan kepatuhan standar mutu ISO/ESG.
+                </div>
+              </div>
             </div>
+
+            {/* Kolom Tanda Tangan */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '24px',
+                textAlign: 'center',
+                marginTop: '20px',
+                paddingTop: '8px',
+                fontSize: '12px',
+              }}
+            >
+              <div>
+                <div style={{ color: '#64748b', marginBottom: '45px' }}>Petani Penyetor,</div>
+                <div style={{ fontWeight: 700, borderTop: '1px solid #94a3b8', paddingTop: '4px' }}>
+                  ( {selectedMember?.name || 'Budi Santoso'} )
+                </div>
+              </div>
+
+              <div>
+                <div style={{ color: '#64748b', marginBottom: '45px' }}>Petugas Timbang & Gudang,</div>
+                <div style={{ fontWeight: 700, borderTop: '1px solid #94a3b8', paddingTop: '4px' }}>
+                  ( Petugas Penerimaan )
+                </div>
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'center', fontSize: '10.5px', color: '#94a3b8', marginTop: '16px' }}>
+              Dokumen resmi sistem ERP Smart Farming Koperasi • Dicetak otomatis sebagai bukti penerimaan komoditas yang sah.
+            </div>
+          </div>
+
+          {/* Tombol Aksi Modal */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
+            <Button variant="outline" onClick={() => setPrintModalOpen(false)}>
+              Tutup
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                window.print()
+              }}
+              style={{ backgroundColor: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              🖨️ Cetak Slip / Nota Timbang
+            </Button>
           </div>
         </Modal>
       )}

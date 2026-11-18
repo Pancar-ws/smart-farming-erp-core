@@ -15,6 +15,7 @@ from .schemas import (
     HarvestOut,
     POOut,
     PurchaseOrderCreate,
+    QuickRestockIn,
 )
 
 router = APIRouter(prefix="/procurement", tags=["Procurement"])
@@ -83,4 +84,12 @@ def receive_goods(
 ):
     gr = goods_service.receive_goods(db, user, body)
     return {"id": gr.id, "gr_no": gr.gr_no, "status": gr.status}
+
+@router.post("/quick-restock", response_model=dict, status_code=201)
+def quick_restock(
+    body: QuickRestockIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(require("po:write")),
+):
+    return goods_service.quick_restock_saprotan(db, user, body)
 

@@ -12,6 +12,7 @@ import {
   fetchSaprotanStockViewApi,
   updateSaprotanApi,
 } from '../../services/masterService'
+import { quickRestockSaprotanApi } from '../../services/procurementService'
 import { formatNumberID, formatRupiah } from '../../utils/formatters'
 
 const SAPROTAN_TYPES = [
@@ -53,6 +54,58 @@ export default function SaprotanPage() {
   const [form, setForm] = useState(INITIAL_FORM)
   const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
+
+  // State Modal Restock / Pengadaan Masuk Gudang
+  const [restockModalOpen, setRestockModalOpen] = useState(false)
+  const [restockItem, setRestockItem] = useState(null)
+  const [restockQty, setRestockQty] = useState('1000')
+  const [restockSupplierId, setRestockSupplierId] = useState('1')
+  const [restockUnitPrice, setRestockUnitPrice] = useState('0')
+  const [restockNote, setRestockNote] = useState('')
+  const [restocking, setRestocking] = useState(false)
+
+  const openRestockModal = (item) => {
+    setRestockItem(item)
+    // Berikan kuantitas saran: jika min_stock > 0 berikan min_stock * 2 atau default 1000
+    const recQty = Number(item.min_stock) > 0 ? Number(item.min_stock) * 2 : 100
+    setRestockQty(String(recQty))
+    setRestockUnitPrice(String(item.purchase_price ?? 0))
+    // Default supplier
+    if (item.type === 'BENIH') setRestockSupplierId('2')
+    else if (item.type === 'KEMASAN') setRestockSupplierId('3')
+    else setRestockSupplierId('1')
+    setRestockNote(`Pengadaan restock pasokan ${item.name}`)
+    setRestockModalOpen(true)
+  }
+
+  const handleRestockSubmit = async () => {
+    if (!restockItem || !restockQty || Number(restockQty) <= 0) return
+    setRestocking(true)
+    try {
+      const res = await quickRestockSaprotanApi({
+        saprotan_id: restockItem.id,
+        supplier_id: Number(restockSupplierId),
+        warehouse_id: 1, // GD-SAP
+        qty: Number(restockQty),
+        unit_price: Number(restockUnitPrice),
+        note: restockNote,
+      })
+
+      setBanner({
+        type: 'success',
+        text: `Pengadaan Berhasil! ${res.qty_received} ${restockItem.uom} ${restockItem.name} berhasil diterima di Gudang GD-SAP (No. GR: ${res.gr_no}). Saldo stok diperbarui.`,
+      })
+      setRestockModalOpen(false)
+      loadData()
+    } catch (err) {
+      setBanner({
+        type: 'danger',
+        text: err.message || 'Gagal memproses pengadaan restock.',
+      })
+    } finally {
+      setRestocking(false)
+    }
+  }
 
   const loadData = async () => {
     setLoading(true)
@@ -243,14 +296,29 @@ export default function SaprotanPage() {
     {
       key: 'actions',
       header: 'Aksi',
-      render: (r) =>
-        canWrite ? (
-          <Button variant="outline" size="sm" onClick={() => openEditModal(r)}>
-            Ubah
+      render: (r) => (
+        <div style={{ display: 'flex', gap: '6px' }}>
+          {canWrite && (
+            <Button variant="outline" size="sm" onClick={() => openEditModal(r)}>
+              Ubah
+            </Button>
+          )}
+          <Button
+            variant="primary"
+            size="sm"
+            style={{
+              backgroundColor: r.below_minimum ? '#0284c7' : '#166534',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+            onClick={() => openRestockModal(r)}
+            title="Tambah stok fisik masuk gudang via pengadaan"
+          >
+            📦 Restock
           </Button>
-        ) : (
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Baca Saja</span>
-        ),
+        </div>
+      ),
     },
   ]
 
@@ -408,6 +476,116 @@ export default function SaprotanPage() {
           />
         </form>
       </Modal>
+
+      {/* Modal Restock / Pengadaan Saprotan */}
+      {restockModalOpen && restockItem && (
+        <Modal
+          title={`Pengadaan & Restock: ${restockItem.name} (${restockItem.code})`}
+          isOpen={restockModalOpen}
+          onClose={() => setRestockModalOpen(false)}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div
+              style={{
+                padding: '12px',
+                backgroundColor: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: '6px',
+                fontSize: '13px',
+                lineHeight: 1.6,
+              }}
+            >
+              <div><strong>Status Stok Saat Ini:</strong> {formatNumberID(restockItem.qty_on_hand)} {restockItem.uom}</div>
+              <div><strong>Batas Minimum (ROP):</strong> {formatNumberID(restockItem.min_stock)} {restockItem.uom}</div>
+              <div style={{ color: '#166534', marginTop: '4px', fontSize: '12px', fontWeight: 600 }}>
+                💡 Rekomendasi restock aman: Minimal {Math.max(100, Number(restockItem.min_stock) * 2)} {restockItem.uom}
+              </div>
+            </div>
+
+            <FormField label={`Jumlah Masuk Gudang (${restockItem.uom})`} required hint="Kuantitas fisik yang diterima dari supplier">
+              <input
+                type="number"
+                step="1"
+                min="1"
+                className="form-control"
+                value={restockQty}
+                onChange={(e) => setRestockQty(e.target.value)}
+                style={{ fontSize: '18px', fontWeight: 700, padding: '10px 14px' }}
+              />
+            </FormField>
+
+            <FormField label="Supplier Pemasok" required hint="Pemasok resmi terdaftar">
+              <select
+                className="form-control"
+                value={restockSupplierId}
+                onChange={(e) => setRestockSupplierId(e.target.value)}
+                style={{ padding: '10px' }}
+              >
+                <option value="1">SUP-001 - PT Pupuk Indonesia Nusantara</option>
+                <option value="2">SUP-002 - CV Benih Unggul Sejahtera</option>
+                <option value="3">SUP-003 - Pabrik Kemasan Lestari</option>
+              </select>
+            </FormField>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <FormField label="Harga Beli Satuan (Rp)" hint="Harga beli per satuan">
+                <input
+                  type="number"
+                  className="form-control"
+                  value={restockUnitPrice}
+                  onChange={(e) => setRestockUnitPrice(e.target.value)}
+                  style={{ padding: '10px' }}
+                />
+              </FormField>
+
+              <FormField label="Estimasi Total Pengadaan">
+                <input
+                  type="text"
+                  className="form-control"
+                  disabled
+                  value={formatRupiah((Number(restockQty) || 0) * (Number(restockUnitPrice) || 0))}
+                  style={{ fontWeight: 700, backgroundColor: '#f8fafc', padding: '10px' }}
+                />
+              </FormField>
+            </div>
+
+            <FormField label="Gudang Penerima">
+              <input
+                type="text"
+                className="form-control"
+                disabled
+                value="GD-SAP (Gudang Sarana Produksi Pertanian)"
+                style={{ backgroundColor: '#f8fafc', padding: '10px' }}
+              />
+            </FormField>
+
+            <FormField label="Catatan Pengadaan">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Misal: Restock persiapan musim tanam 2026"
+                value={restockNote}
+                onChange={(e) => setRestockNote(e.target.value)}
+                style={{ padding: '10px' }}
+              />
+            </FormField>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '14px' }}>
+              <Button variant="outline" onClick={() => setRestockModalOpen(false)}>
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                disabled={restocking || !restockQty || Number(restockQty) <= 0}
+                onClick={handleRestockSubmit}
+                style={{ backgroundColor: '#0284c7', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                {restocking ? 'Memproses Pengadaan...' : '📦 Terima Stok ke Gudang (GD-SAP)'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

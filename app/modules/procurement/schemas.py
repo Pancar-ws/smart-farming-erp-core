@@ -71,3 +71,11 @@ class GROut(BaseModel):
     received_date: date
     status: str
 
+class QuickRestockIn(BaseModel):
+    saprotan_id: int
+    supplier_id: int | None = None
+    warehouse_id: int = 1
+    qty: Decimal = Field(gt=0)
+    unit_price: Decimal | None = None
+    note: str | None = None
+

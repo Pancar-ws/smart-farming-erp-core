@@ -90,3 +90,17 @@ export async function createHarvestReceiptApi(payload) {
     }
   )
 }
+
+export async function quickRestockSaprotanApi(payload) {
+  return apiRequest('/procurement/quick-restock', {
+    method: 'POST',
+    body: {
+      saprotan_id: Number(payload.saprotan_id),
+      supplier_id: payload.supplier_id ? Number(payload.supplier_id) : null,
+      warehouse_id: Number(payload.warehouse_id || 1),
+      qty: Number(payload.qty),
+      unit_price: payload.unit_price != null ? Number(payload.unit_price) : null,
+      note: payload.note || null,
+    },
+  })
+}

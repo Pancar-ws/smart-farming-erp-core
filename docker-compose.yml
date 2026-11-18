@@ -17,6 +17,8 @@ services:
   api:
     build: .
     env_file: .env
+    volumes:
+      - ./app:/srv/app
     depends_on:
       db:
         condition: service_healthy
