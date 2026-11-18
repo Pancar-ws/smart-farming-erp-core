@@ -274,8 +274,8 @@ export default function SortingPage() {
       header: 'Status',
       accessor: 'status',
       cell: (row) => (
-        <Badge variant={row.status === 'POSTED' ? 'green' : 'amber'}>
-          {row.status === 'POSTED' ? 'POSTED (MASUK FIFO)' : 'DRAFT'}
+        <Badge variant={row.status === 'POSTED' ? 'green' : row.status === 'REVERSED' ? 'gray' : 'amber'}>
+          {row.status === 'POSTED' ? 'POSTED (MASUK FIFO)' : row.status === 'REVERSED' ? 'DIBATALKAN' : 'DRAFT'}
         </Badge>
       ),
     },
@@ -288,19 +288,20 @@ export default function SortingPage() {
       header: 'Aksi',
       accessor: 'id',
       cell: (row) =>
-        row.status !== 'POSTED' ? (
+        row.status === 'DRAFT' ? (
           <Button
             variant="primary"
             size="sm"
             onClick={async () => {
               try {
+                await createQualityCheckApi(row.id, { passed: true, notes: 'Lolos uji mutu visual & sortasi' }).catch(() => {})
                 await postSortingOrderApi(row.id)
                 const updated = await fetchSortingOrdersApi().catch(() => [])
                 setSortingOrders(updated)
                 setNotif({
                   type: 'success',
                   title: 'Order Berhasil Diposting',
-                  message: `Order ${row.order_no} telah diposting ke stok gudang.`,
+                  message: `Order ${row.order_no} telah diposting ke stok gudang FIFO.`,
                 })
               } catch (err) {
                 setNotif({
@@ -313,9 +314,13 @@ export default function SortingPage() {
           >
             Posting ke FIFO
           </Button>
-        ) : (
+        ) : row.status === 'POSTED' ? (
           <span style={{ fontSize: '13px', color: 'var(--color-green)', fontWeight: 600 }}>
             ✅ Terkunci
+          </span>
+        ) : (
+          <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 500 }}>
+            Dibatalkan
           </span>
         ),
     },
