@@ -18,8 +18,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
 
   if (isAuthenticated) {
-    const target = location.state?.from?.pathname || '/dashboard'
-    return <Navigate to={target} replace />
+    return <Navigate to="/dashboard" replace />
   }
 
   const handleSubmit = async (e) => {
@@ -34,8 +33,7 @@ export default function LoginPage() {
     setSubmitting(true)
     try {
       await login(username, password)
-      const target = location.state?.from?.pathname || '/dashboard'
-      navigate(target, { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setErrorMsg(err.message || 'Gagal masuk. Periksa kembali username dan kata sandi Anda.')
     } finally {

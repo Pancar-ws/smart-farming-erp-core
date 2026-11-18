@@ -43,6 +43,7 @@ const INITIAL_FORM = {
 export default function SaprotanPage() {
   const { hasPermission } = useAuth()
   const canWrite = hasPermission(['master:write'])
+  const canRestock = hasPermission(['po:write'])
 
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -296,29 +297,41 @@ export default function SaprotanPage() {
     {
       key: 'actions',
       header: 'Aksi',
-      render: (r) => (
-        <div style={{ display: 'flex', gap: '6px' }}>
-          {canWrite && (
-            <Button variant="outline" size="sm" onClick={() => openEditModal(r)}>
-              Ubah
-            </Button>
-          )}
-          <Button
-            variant="primary"
-            size="sm"
-            style={{
-              backgroundColor: r.below_minimum ? '#0284c7' : '#166534',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-            onClick={() => openRestockModal(r)}
-            title="Tambah stok fisik masuk gudang via pengadaan"
-          >
-            📦 Restock
-          </Button>
-        </div>
-      ),
+      render: (r) => {
+        if (!canWrite && !canRestock) {
+          return (
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              Hanya Lihat (Read-Only)
+            </span>
+          )
+        }
+
+        return (
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {canWrite && (
+              <Button variant="outline" size="sm" onClick={() => openEditModal(r)}>
+                Ubah
+              </Button>
+            )}
+            {canRestock && (
+              <Button
+                variant="primary"
+                size="sm"
+                style={{
+                  backgroundColor: r.below_minimum ? '#0284c7' : '#166534',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+                onClick={() => openRestockModal(r)}
+                title="Tambah stok fisik masuk gudang via pengadaan"
+              >
+                📦 Restock
+              </Button>
+            )}
+          </div>
+        )
+      },
     },
   ]
 
