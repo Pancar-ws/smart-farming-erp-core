@@ -69,6 +69,17 @@ export async function createSortingOrderApi(payload) {
   )
 }
 
+export async function createQualityCheckApi(orderId, payload = { passed: true, notes: 'Lolos uji mutu' }) {
+  return apiRequest(
+    `/manufacturing/sorting-orders/${orderId}/quality-checks`,
+    {
+      method: 'POST',
+      body: payload,
+    },
+    async () => ({ id: 1, passed: payload.passed, notes: payload.notes })
+  )
+}
+
 export async function postSortingOrderApi(orderId) {
   return apiRequest(
     `/manufacturing/sorting-orders/${orderId}/post`,

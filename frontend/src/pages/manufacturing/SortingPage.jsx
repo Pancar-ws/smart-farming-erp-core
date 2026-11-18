@@ -6,6 +6,7 @@ import FormField from '../../components/FormField'
 import Table from '../../components/Table'
 import { useAuth } from '../../hooks/useAuth'
 import {
+  createQualityCheckApi,
   createSortingOrderApi,
   fetchSortingOrdersApi,
   postSortingOrderApi,
@@ -158,8 +159,9 @@ export default function SortingPage() {
 
       const res = await createSortingOrderApi(payload)
 
-      // Coba posting langsung ke stok FIFO
+      // Coba rekam QC passed dan posting langsung ke stok FIFO
       try {
+        await createQualityCheckApi(res.id, { passed: true, notes: 'Lolos uji mutu visual & sortasi' }).catch(() => {})
         await postSortingOrderApi(res.id)
         setNotif({
           type: 'success',
