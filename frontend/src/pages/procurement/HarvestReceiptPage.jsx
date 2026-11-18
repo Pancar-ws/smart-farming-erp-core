@@ -67,10 +67,10 @@ export default function HarvestReceiptPage() {
         if (savedDraft) {
           try {
             const parsed = JSON.parse(savedDraft)
-            if (parsed.memberCode && memData.some((m) => m.code === parsed.memberCode)) {
+            if (parsed.memberCode && memData.some((m) => (m.member_code || m.code) === parsed.memberCode)) {
               setMemberCode(parsed.memberCode)
             } else if (memData.length > 0) {
-              setMemberCode(memData[0].code)
+              setMemberCode(memData[0].member_code || memData[0].code)
             }
 
             if (parsed.productId && prodData.some((p) => String(p.id) === String(parsed.productId))) {
@@ -87,7 +87,7 @@ export default function HarvestReceiptPage() {
             // Ignore parse error
           }
         } else {
-          if (memData.length > 0) setMemberCode(memData[0].code)
+          if (memData.length > 0) setMemberCode(memData[0].member_code || memData[0].code)
           if (prodData.length > 0) setProductId(String(prodData[0].id))
         }
       } catch (err) {
@@ -173,6 +173,24 @@ export default function HarvestReceiptPage() {
         type: 'error',
         title: 'Petani Wajib Dipilih',
         message: 'Silakan pilih petani anggota atau masukkan kode anggota.',
+      })
+      return
+    }
+
+    if (!memberCode) {
+      setNotif({
+        type: 'error',
+        title: 'Petani Anggota Wajib Dipilih',
+        message: 'Silakan pilih petani anggota penyetor panen dari daftar.',
+      })
+      return
+    }
+
+    if (!productId) {
+      setNotif({
+        type: 'error',
+        title: 'Komoditas Wajib Dipilih',
+        message: 'Silakan pilih komoditas hasil panen.',
       })
       return
     }
@@ -380,11 +398,14 @@ export default function HarvestReceiptPage() {
                 disabled={!canReceive || submitting}
               >
                 <option value="">-- Pilih Petani Anggota --</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.code}>
-                    {m.code} - {m.name} ({m.main_commodity || 'Anggota'})
-                  </option>
-                ))}
+                {members.map((m) => {
+                  const mCode = m.member_code || m.code
+                  return (
+                    <option key={m.id} value={mCode}>
+                      {mCode} - {m.name} ({m.main_commodity || 'Anggota'})
+                    </option>
+                  )
+                })}
               </select>
             </FormField>
 

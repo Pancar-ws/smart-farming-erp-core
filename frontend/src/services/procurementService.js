@@ -47,7 +47,7 @@ export async function createHarvestReceiptApi(payload) {
       const db = getMockDB()
       db.harvestReceipts = db.harvestReceipts || []
 
-      const member = (db.members || []).find((m) => m.code === payload.member_code)
+      const member = (db.members || []).find((m) => (m.member_code || m.code) === payload.member_code)
       if (!member) {
         throw new ApiError(`Petani anggota dengan kode ${payload.member_code} tidak ditemukan.`, 404)
       }
