@@ -49,6 +49,9 @@ def create_app() -> FastAPI:
     ):
         application.include_router(r, prefix="/api/v1")
 
+    # Alias prefix agar /api/v1/reporting/* juga valid
+    application.include_router(reporting_router, prefix="/api/v1/reporting")
+
     @application.get("/")
     def root():
         return {

@@ -12,21 +12,21 @@ import { ApiError, apiRequest } from './apiClient'
 
 export async function fetchEsgMetricsApi() {
   const [env, soc, gov] = await Promise.all([
-    apiRequest('/reporting/reports/esg/environmental', { method: 'GET' }, async () => ({
+    apiRequest('/reports/esg/environmental', { method: 'GET' }, async () => ({
       organic_fertilizer_kg: 1250,
       chemical_fertilizer_kg: 420,
       organic_ratio_pct: 74.85,
       estimated_carbon_emission_kg: 385.2,
       carbon_reduction_pct: 22.4,
     })),
-    apiRequest('/reporting/reports/esg/social', { method: 'GET' }, async () => ({
+    apiRequest('/reports/esg/social', { method: 'GET' }, async () => ({
       active_members_count: 85,
       total_members_count: 100,
       active_ratio_pct: 85.0,
       avg_payment_duration_days: 1.8,
       on_time_payment_pct: 97.5,
     })),
-    apiRequest('/reporting/reports/esg/governance', { method: 'GET' }, async () => ({
+    apiRequest('/reports/esg/governance', { method: 'GET' }, async () => ({
       total_harvest_kg: 12500,
       total_food_loss_kg: 850,
       food_loss_pct: 6.8,
@@ -39,7 +39,7 @@ export async function fetchEsgMetricsApi() {
 }
 
 export async function fetchTraceBatchApi(batchCode) {
-  return apiRequest(`/reporting/trace/batches/${batchCode}`, { method: 'GET' }, async () => {
+  return apiRequest(`/trace/batches/${batchCode}`, { method: 'GET' }, async () => {
     return {
       batch_code: batchCode,
       product_name: 'Cabai Rawit Merah (Grade A Super)',

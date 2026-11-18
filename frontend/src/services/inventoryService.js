@@ -76,7 +76,7 @@ export async function fetchInventoryLotsApi({ category = '', warehouse_id = null
 }
 
 export async function fetchFinishedStockReportApi() {
-  return apiRequest('/reporting/reports/finished-stock', { method: 'GET' }, async () => {
+  return apiRequest('/reports/finished-stock', { method: 'GET' }, async () => {
     return [
       {
         product_id: 1,
@@ -115,7 +115,7 @@ export async function fetchFinishedStockReportApi() {
 }
 
 export async function fetchSaprotanStockApi() {
-  return apiRequest('/reporting/reports/saprotan-stock', { method: 'GET' }, async () => {
+  return apiRequest('/reports/saprotan-stock', { method: 'GET' }, async () => {
     return [
       {
         saprotan_id: 1,
@@ -169,8 +169,8 @@ export async function downloadStockExcelApi(reportType = 'finished') {
   const token = getStoredToken()
   const endpoint =
     reportType === 'finished'
-      ? '/api/v1/reporting/reports/finished-stock?format=xlsx'
-      : '/api/v1/reporting/reports/saprotan-stock?format=xlsx'
+      ? '/api/v1/reports/finished-stock?format=xlsx'
+      : '/api/v1/reports/saprotan-stock?format=xlsx'
 
   const res = await fetch(endpoint, {
     headers: {
