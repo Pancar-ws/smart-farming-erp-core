@@ -13,11 +13,14 @@ export default function Table({
       <table className="data-table">
         <thead>
           <tr>
-            {columns.map((col) => (
-              <th key={col.key} style={col.width ? { width: col.width } : undefined}>
-                {col.header}
-              </th>
-            ))}
+            {columns.map((col, cIdx) => {
+              const colKey = col.key || col.accessor || `col-${cIdx}`
+              return (
+                <th key={colKey} style={col.width ? { width: col.width } : undefined}>
+                  {col.header}
+                </th>
+              )
+            })}
           </tr>
         </thead>
         <tbody>
@@ -39,11 +42,15 @@ export default function Table({
           ) : (
             data.map((row, idx) => (
               <tr key={row[rowKey] ?? idx}>
-                {columns.map((col) => (
-                  <td key={col.key} style={col.align ? { textAlign: col.align } : undefined}>
-                    {col.render ? col.render(row, idx) : row[col.key] ?? '-'}
-                  </td>
-                ))}
+                {columns.map((col, cIdx) => {
+                  const colKey = col.key || col.accessor || `col-${cIdx}`
+                  const renderFn = col.render || col.cell
+                  return (
+                    <td key={colKey} style={col.align ? { textAlign: col.align } : undefined}>
+                      {renderFn ? renderFn(row, idx) : (col.key || col.accessor ? row[col.key || col.accessor] : null) ?? '-'}
+                    </td>
+                  )
+                })}
               </tr>
             ))
           )}
