@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import logoImg from '../assets/logo.png'
 import Badge from '../components/Badge'
 import Button from '../components/Button'
 import { NavIcon } from '../components/Icons'
@@ -70,7 +71,12 @@ export default function MainLayout() {
     <div className="app-shell">
       <aside className={`app-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-brand">
-          <div className="sidebar-brand-logo">SF</div>
+          <img
+            src={logoImg}
+            alt="Logo Smart Farming ERP"
+            className="sidebar-brand-logo"
+            style={{ objectFit: 'contain', backgroundColor: '#ffffff', padding: '2px' }}
+          />
           <div>
             <div className="sidebar-brand-title">Smart Farming ERP</div>
             <div className="sidebar-brand-subtitle">Koperasi Tani Mandiri</div>

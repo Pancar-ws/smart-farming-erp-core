@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import logoImg from '../../assets/logo.png'
 import AlertBanner from '../../components/AlertBanner'
 import Button from '../../components/Button'
 import FormField from '../../components/FormField'
@@ -53,9 +54,12 @@ export default function LoginPage() {
       <div className="login-hero">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div className="sidebar-brand-logo" style={{ width: '46px', height: '46px', fontSize: '19px' }}>
-              SF
-            </div>
+            <img
+              src={logoImg}
+              alt="Logo Smart Farming ERP"
+              className="sidebar-brand-logo"
+              style={{ width: '46px', height: '46px', objectFit: 'contain', backgroundColor: '#ffffff', padding: '3px' }}
+            />
             <div>
               <div style={{ fontSize: '19px', fontWeight: 700 }}>Smart Farming ERP</div>
               <div style={{ fontSize: '13px', opacity: 0.85 }}>
