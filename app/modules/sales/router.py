@@ -27,7 +27,7 @@ def create_sales_order(
 ):
     return service.create_order(db, user, body)
 
-@router.get("/orders", response_model=list[SalesOrderOut])
+@router.get("/orders")
 def list_sales_orders(
     status: str | None = None,
     customer_id: int | None = None,
@@ -39,7 +39,50 @@ def list_sales_orders(
         stmt = stmt.where(SalesOrder.status == status)
     if customer_id:
         stmt = stmt.where(SalesOrder.customer_id == customer_id)
-    return db.scalars(stmt.order_by(SalesOrder.id.desc())).all()
+    orders = db.scalars(stmt.order_by(SalesOrder.id.desc())).all()
+
+    result = []
+    for so in orders:
+        do = db.scalar(select(DeliveryOrder).where(DeliveryOrder.so_id == so.id))
+        lines_data = []
+        if do and do.lines:
+            for dl in do.lines:
+                lines_data.append({
+                    "product_name": "Cabai Rawit Merah",
+                    "grade_code": dl.grade.code if dl.grade else f"Grade {dl.grade_id}",
+                    "allocations": [{"batch_code": dl.batch_code, "qty": float(dl.qty)}],
+                    "qty": float(dl.qty),
+                    "unit_price": float(dl.unit_price),
+                })
+        else:
+            for sol in so.lines:
+                allocs = [{"batch_code": al.lot.batch_code, "qty": float(al.qty)} for al in sol.allocations if al.lot]
+                grade_code = ""
+                if sol.allocations and sol.allocations[0].lot and sol.allocations[0].lot.grade:
+                    grade_code = sol.allocations[0].lot.grade.code
+                else:
+                    grade_code = f"Grade {sol.grade_id}"
+                lines_data.append({
+                    "product_name": "Cabai Rawit Merah",
+                    "grade_code": grade_code,
+                    "allocations": allocs,
+                    "qty": float(sol.qty),
+                    "unit_price": float(sol.unit_price),
+                })
+        result.append({
+            "id": so.id,
+            "so_no": so.so_no,
+            "customer_id": so.customer_id,
+            "customer_name": so.customer.name if so.customer else "",
+            "segment": so.segment,
+            "order_date": so.order_date,
+            "status": so.status,
+            "total": float(so.total),
+            "note": so.note,
+            "do_no": do.do_no if do else None,
+            "lines": lines_data,
+        })
+    return result
 
 @router.post("/orders/{so_id}/ship")
 def ship_sales_order(
