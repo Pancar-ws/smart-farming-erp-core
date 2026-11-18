@@ -42,8 +42,10 @@ class ExpenseCreate(BaseModel):
     description: str | None = None
 
 class ShuCalculateIn(BaseModel):
-    period_start: date
-    period_end: date
+    period_start: date | None = None
+    period_end: date | None = None
+    year: int | None = None
+    total_profit: Decimal | None = None
 
 class PeriodCloseIn(BaseModel):
     year: int
