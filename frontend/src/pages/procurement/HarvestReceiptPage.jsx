@@ -67,8 +67,18 @@ export default function HarvestReceiptPage() {
         if (savedDraft) {
           try {
             const parsed = JSON.parse(savedDraft)
-            if (parsed.memberCode) setMemberCode(parsed.memberCode)
-            if (parsed.productId) setProductId(String(parsed.productId))
+            if (parsed.memberCode && memData.some((m) => m.code === parsed.memberCode)) {
+              setMemberCode(parsed.memberCode)
+            } else if (memData.length > 0) {
+              setMemberCode(memData[0].code)
+            }
+
+            if (parsed.productId && prodData.some((p) => String(p.id) === String(parsed.productId))) {
+              setProductId(String(parsed.productId))
+            } else if (prodData.length > 0) {
+              setProductId(String(prodData[0].id))
+            }
+
             if (parsed.grossKg) setGrossKg(String(parsed.grossKg))
             if (parsed.tareKg) setTareKg(String(parsed.tareKg))
             if (parsed.moisturePct) setMoisturePct(String(parsed.moisturePct))
@@ -76,6 +86,9 @@ export default function HarvestReceiptPage() {
           } catch {
             // Ignore parse error
           }
+        } else {
+          if (memData.length > 0) setMemberCode(memData[0].code)
+          if (prodData.length > 0) setProductId(String(prodData[0].id))
         }
       } catch (err) {
         setNotif({

@@ -3,6 +3,7 @@
  * Mendukung validasi real-time, pesan error, petunjuk (hint), dan atribut readOnly/disabled.
  */
 export default function FormField({
+  children,
   label,
   name,
   type = 'text',
@@ -33,7 +34,9 @@ export default function FormField({
         </label>
       )}
 
-      {type === 'select' ? (
+      {children ? (
+        children
+      ) : type === 'select' ? (
         <select
           id={name}
           name={name}
