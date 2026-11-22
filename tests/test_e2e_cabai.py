@@ -74,6 +74,9 @@ def test_cabai_end_to_end_flow(client, auth_headers, scenario_ids):
             assert rej.status_code == 422
             assert rej.json()["error"]["code"] == "MASS_BALANCE_VIOLATION"
 
+        # Catat hutang anggota sebelum posting batch
+        pay_before = D(str(client.get("/api/v1/master/members/1/summary", headers=keu).json().get("payable_total", 0)))
+
         # Sortasi benar
         ok_payload = {
             "process_date": "2026-11-14",
@@ -96,9 +99,9 @@ def test_cabai_end_to_end_flow(client, auth_headers, scenario_ids):
             post_res = client.post(f"/api/v1/manufacturing/sorting-orders/{oid}/post", headers=srt)
             assert post_res.status_code == 200
 
-            # UAT-07: Hutang anggota = Rp32.600.000 (700*38000 + 200*30000)
-            pay = client.get("/api/v1/master/members/1/summary", headers=keu).json()
-            assert D(pay["payable_total"]) == D("32600000")
+            # UAT-07: Pertambahan hutang anggota = Rp32.600.000 (700*38000 + 200*30000)
+            pay_after = D(str(client.get("/api/v1/master/members/1/summary", headers=keu).json()["payable_total"]))
+            assert (pay_after - pay_before) == D("32600000")
 
             # UAT-08: SO 700A + 200B ke Retail -> Rp39.400.000 (700*46000 + 200*36000)
             so_res = client.post("/api/v1/sales/orders", headers=gud, json=so_payload_multi(ids, a=700, b=200))

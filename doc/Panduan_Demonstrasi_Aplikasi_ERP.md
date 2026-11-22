@@ -1,146 +1,146 @@
-# PANDUAN STRATEGIS ALUR DEMONSTRASI SISTEM ERP SMART FARMING
-**Koperasi Tani Mandiri — Supply Chain Management & Operations Management Integration**
+# PANDUAN STRATEGIS PRESENTASI & DEMO SISTEM ERP SMART FARMING
+## Durasi Maksimal: 4–5 Menit | Format Tim: 5 Pembicara (Estafet Rantai Pasok)
+**Koperasi Tani Agribisnis Mandiri — Single Source of Truth & Operations Management**
 
-Dokumen ini disusun sebagai panduan operasional saat dosen penguji meminta demonstrasi langsung (*live demo*) aplikasi. Alur ini dirancang dengan pendekatan **Studi Kasus Terpadu (Single Continuous Story)** agar dosen melihat bahwa sistem ini benar-benar menyelesaikan 5 masalah utama operasional, menerapkan prinsip **Single Source of Truth**, dan memenuhi standar akademis **Operations Management**.
-
----
-
-## 🎯 STRATEGI UTAMA DEMO (GOLDEN RULES)
-
-1. **Gunakan "Storytelling Rantai Pasok", Bukan Sekadar Pamer Fitur:**
-   * Jangan hanya mendemokan tombol per tombol secara acak.
-   * Gunakan skenario: *"Pak Budi (Petani) menyetor panen Cabai 1.000 kg → Disortir → Masuk Gudang → Dijual ke Retail → Jurnal Otomatis & SHU → Masuk Laporan ESG Pengurus"*.
-2. **Kaitkan dengan Teori Manajemen Operasi di Setiap Langkah:**
-   * Sebutkan istilah kunci: *Single Source of Truth, Mass Balance, Quality Control, FIFO, Auto-Journaling, Triple Bottom Line (ESG)*.
-3. **Tunjukkan "Mekanisme Kontrol / Validasi" (*The Wow Factor*):**
-   * Perlihatkan bagaimana sistem **menolak** jika ada ketidakseimbangan berat (Mass Balance) agar dosen melihat adanya *Internal Control* yang tangguh.
+Dokumen ini adalah **naskah skenario (*playbook*) resmi** untuk presentasi 4–5 menit di hadapan Dosen Pengampu (*Ir. Muhammad Ihsan Fawzi, S.Kom., M.Kom.*). Dirancang agar waktu berjalan sangat presisi, setiap anggota memiliki peran krusial, transisi antar-pembicara mulus tanpa jeda canggung (*zero awkward silence*), dan audiens langsung terkesima dengan solusi yang ditawarkan.
 
 ---
 
-## ⏱️ RINGKASAN TIMELINE DEMO (DURASI TOTAL: ~7-8 MENIT)
+### ⏱️ STRATEGI WAKTU & MATRIKS PEMBAGIAN PERAN (5 ANGGOTA)
 
-```
-[00:00 - 01:00] INTRO & MASTER DATA (Single Source of Truth)
-      ↓
-[01:00 - 02:30] PENERIMAAN PANEN (Procurement & Traceability Batch)
-      ↓
-[02:30 - 04:00] SORTASI & QUALITY CONTROL (Mass Balance Validation)
-      ↓
-[04:00 - 05:00] GUDANG & FIFO (Inventory Management & ROP)
-      ↓
-[05:00 - 06:15] PENJUALAN & SURAT JALAN (Sales Order & Delivery)
-      ↓
-[06:15 - 07:15] AKUNTANSI OTOMATIS & SHU (Financial Transparency)
-      ↓
-[07:15 - 08:00] LAPORAN EKSEKUTIF & ESG (Sustainable Operations Management)
-```
+| Waktu | Durasi | Pembicara | Peran dalam Presentasi | Fokus Panggung & Aksi Layar |
+| :---: | :---: | :--- | :--- | :--- |
+| **00:00 – 00:50** | 50 dtk | **Pembicara 1 (Pancar)** | *Project Lead & Context Setter* | **The Hook:** Masalah nyata koperasi tani & Solusi Smart Farming ERP terintegrasi. |
+| **00:50 – 01:40** | 50 dtk | **Pembicara 2 (Amelia)** | *Procurement & Raw Ingestion* | **Hulu:** Penerimaan setoran panen 1.000 kg curah, nomor batch unik, & thermal QR slip. |
+| **01:40 – 02:40** | 60 dtk | **Pembicara 3 (Aufa)** | *Manufacturing & Quality Control* | **The Money Shot:** Uji tolak Mass Balance (selisih $\neq 0$ kg) & Aturan Afkir Rp 0. |
+| **02:40 – 03:40** | 60 dtk | **Pembicara 4 (Salsabilla)** | *Sales, Tiering & FIFO Allocation* | **Hilir:** Sales Order 3 segmen pasar, alokasi stok tertua FIFO, & Surat Jalan DO. |
+| **03:40 – 04:40** | 60 dtk | **Pembicara 5 (Mazsa)** | *Financial Integrity, Trace & ESG* | **Valuasi & Penutup:** Auto-Journal, margin Rp 6,8 Jt, Traceability, ESG, & E2E Test PASS. |
+
+> **💡 TIPS EMAS TEKNIS (PENTING SEBELUM MULAI):**
+> 1. Gunakan **1 laptop utama** yang terhubung ke proyektor dengan browser membuka `http://localhost:5173/`.
+> 2. Semua pembicara berdiri berjajar rapi. Gunakan tombol **"Pilih Akun Demo Cepat"** di halaman login untuk beralih akun dalam **1 detik** tanpa perlu mengetik username/password.
+> 3. Tunjuk salah satu rekan (atau pembicara terkait) untuk mengklik mouse dengan tangkas sesuai naskah.
 
 ---
 
-## 🎬 ALUR LANGKAH DEMO SECARA RINCI
-
-### BABAK 1: Master Data & Single Source of Truth
-* **Aktor / Login:** Superadmin atau Admin Keanggotaan (`admin` / `password123`)
-* **Halaman:** `/` (Dashboard) → Master Data (Petani & Lahan)
-* **Aksi Demo:**
-  1. Tunjukkan halaman Dashboard ringkasan koperasi.
-  2. Klik menu **Petani & Lahan**, tunjukkan data terpadu anggota (misal: Pak Budi Santoso - `MBR-001`, luas lahan, jenis komoditas cabai).
-* **Narasi ke Dosen:**
-  > *"Bapak/Ibu dosen, seperti yang kami sampaikan di Slide 4, fondasi utama ERP adalah **Single Source of Truth**. Sebelum transaksi berjalan, seluruh data master seperti petani, komoditas, dan gudang terpusat di sini. Tidak ada lagi duplikasi catatan antar-buku."*
+## 🎬 NASKAH LENGKAP DEMO DETIK PER DETIK
 
 ---
 
-### BABAK 2: Penerimaan Panen (Procurement & Lot Tracing)
-* **Aktor / Login:** Petugas Penerimaan (`penerimaan` / `password123`)
-* **Halaman:** `/procurement/harvest-receipts`
-* **Aksi Demo:**
-  1. Buka form penerimaan panen.
-  2. Tunjukkan bagaimana petugas memilih Petani `MBR-001 (Budi Santoso)`.
-  3. Masukkan komoditas: `Cabai Merah Keriting`, Berat Kotor `1.020 kg`, Tarra `20 kg` → Sistem otomatis menghitung Netto **1.000 kg**.
-  4. Klik Simpan. Tunjukkan terbitnya **Nomor Batch Unik** (misal: `BATCH-20261118-001`).
-* **Narasi ke Dosen:**
-  > *"Pada modul Procurement ini, hasil panen ditimbang secara objektif. Sistem langsung menerbitkan **Nomor Batch Unik**. Batch ini yang menjadi jangkar **Traceability** dari hulu hingga hilir, memastikan setiap gram cabai dapat dilacak kebun asalnya."*
+### BAGIAN 1: THE HOOK & VALUE PROPOSITION (00:00 – 00:50)
+* **Pembicara:** **Pancar Wahyu Setiabi (H1D024018)**
+* **Tampilan Layar:** Halaman Depan / Login Page (`http://localhost:5173/login`)
+* **Gaya Penyampaian:** Percaya diri, energik, artikulatif, langsung menembak masalah nyata.
+
+> **[00:00 - 00:15] Pembukaan & Hook Masalah:**  
+> *"Selamat pagi/siang Bapak Dosen dan rekan-rekan sekalian. Selama puluhan tahun, koperasi pertanian di Indonesia menghadapi tiga penyakit kronis: permainan timbangan tengkulak, susut hasil panen liar yang tidak terdeteksi, dan pencatatan keuangan manual yang memicu ketidakpercayaan petani anggota."*
+
+> **[00:15 - 00:35] Solusi yang Ditawarkan:**  
+> *"Untuk mengatasi hal tersebut, kami menghadirkan **Smart Farming ERP Core**, platform terintegrasi berbasis **Single Source of Truth** yang menghubungkan seluruh mata rantai agribisnis: mulai dari keanggotaan petani, penimbangan panen, pemilahan mutu, rotasi stok FIFO, hingga akuntansi otomatis dan pelaporan keberlanjutan ESG."*
+
+> **[00:35 - 00:50] Orientasi Sistem & Estafet:**  
+> *"Seperti yang terlihat pada layar, sistem membagi wewenang ke dalam 6 peran operasional terstandarisasi URS. Bagaimana alur digital ini dimulai langsung dari lahan petani? Rekan saya **Amelia** akan mendemonstrasikannya pada modul Penerimaan."*  
+> *(Aksi Layar: Klik tombol cepat peran **Penerimaan** &rarr; Masuk Dashboard Penerimaan)*
 
 ---
 
-### BABAK 3: Sortasi, Grading & Validasi Keseimbangan Massa (*Highlight Utama*)
-* **Aktor / Login:** Petugas Sortasi (`sortasi` / `password123`)
-* **Halaman:** `/production/sorting`
-* **Aksi Demo (*The Killer Feature*):**
-  1. Pilih penerimaan panen 1.000 kg yang tadi diterima.
-  2. **Tunjukkan Validasi Error Dulu (Demo Proteksi):**
-     * Input Grade A: 700 kg, Grade B: 200 kg, Afkir: 90 kg (Total = 990 kg, selisih 10 kg).
-     * Tunjukkan peringatan merah sistem: *"Keseimbangan massa tidak terpenuhi. Selisih 10 kg!"*
-     * Jelaskan bahwa tombol Simpan terkunci.
-  3. **Perbaiki Input:**
-     * Ubah Afkir menjadi 100 kg (Total = 1.000 kg, Selisih = 0 kg).
-     * Klik Konfirmasi & Posting.
-* **Narasi ke Dosen:**
-  > *"Di sinilah kami menerapkan prinsip **Quality Management** dan hukum fisika **Mass Balance ($W_{input} = W_{A} + W_{B} + W_{C} + W_{afkir}$)**. Sistem kami memiliki mekanisme **Internal Control**: petugas tidak bisa menyimpan data jika ada selisih berat bahkan hanya 1 kg. Ini mencegah manipulasi timbangan, pencurian terselubung, dan susut yang tidak teridentifikasi (*shrinkage*)."*
+### BAGIAN 2: PROCUREMENT & LOT TRACING HULU (00:50 – 01:40)
+* **Pembicara:** **Amelia Maharani Andessy (H1D024032)**
+* **Tampilan Layar:** Modul Penerimaan Panen (`/procurement/harvest-receipts`)
+* **Gaya Penyampaian:** Rapi, lugas, menekankan kepastian data dan keterlacakan.
+
+> **[00:50 - 01:10] Aksi Timbang Panen Curah:**  
+> *"Terima kasih Pancar. Pada modul Penerimaan, petani anggota kita—Bapak Budi Santoso—datang menyetorkan panen cabai rawit merah. Petugas cukup memilih nama anggota, meletakkan komoditas di timbangan digital, dan memasukkan data: berat kotor 1.000 kg tanpa potongan tara."*  
+> *(Aksi Layar: Isi form setoran cabai 1.000 kg & klik tombol Simpan)*
+
+> **[01:10 - 01:30] Penerbitan Nomor Batch & Struk Thermal QR:**  
+> *"Seketika, sistem secara otomatis menerbitkan **Nomor Batch Unik: `BATCH-20261123-001`**. Nomor batch inilah yang menjadi paspor digital komoditas dari hulu ke hilir. Sistem langsung mencetak **Struk Bukti Timbang Thermal 58mm lengkap dengan QR Code**, memberikan bukti fisik transparan yang dipegang oleh petani agar tidak ada kecurigaan manipulasi berat."*  
+> *(Aksi Layar: Klik tombol 'Cetak Slip' / perlihatkan pop-up struk QR Code)*
+
+> **[01:30 - 01:40] Estafet ke Manufaktur:**  
+> *"Cabai mentah curah telah aman di gudang penerimaan. Selanjutnya, rekan saya **Aufa** akan memperlihatkan bagaimana benteng pertahanan kualitas koperasi ditegakkan di bagian Sortasi."*  
+> *(Aksi Layar: Klik 'Keluar' & klik tombol cepat peran **Sortasi & QC**)*
 
 ---
 
-### BABAK 4: Manajemen Stok Gudang & Penegakan FIFO
-* **Aktor / Login:** Admin Gudang (`gudang` / `password123`)
-* **Halaman:** `/inventory/stock`
-* **Aksi Demo:**
-  1. Tunjukkan Tab **Stok Barang Jadi (GD-JADI)**.
-  2. Perlihatkan bahwa stok Grade A (700 kg) dan Grade B (200 kg) langsung masuk secara *real-time* dengan label batch yang sama.
-  3. Tunjukkan Tab **Stok Saprotan & Peringatan ROP (Reorder Point)**:
-     * Perlihatkan indikator status aman vs peringatan minimum stok pupuk/benih.
-* **Narasi ke Dosen:**
-  > *"Di modul Inventory, kita melihat penerapan **Inventory Control & FIFO**. Hasil sortasi otomatis menambah saldo stok siap jual per batch tanggal kedaluwarsa. Selain itu, sistem memantau batas **Reorder Point (ROP)** pupuk agar koperasi tidak pernah mengalami stockout maupun overstock."*
+### BAGIAN 3: MANUFACTURING & STRICT MASS BALANCE (01:40 – 02:40) ⭐ *THE MONEY SHOT*
+* **Pembicara:** **Aufa Salsabila Algifari (H1D024042)**
+* **Tampilan Layar:** Modul Sortasi & Grading Mutu (`/manufacturing/sorting`)
+* **Gaya Penyampaian:** Tegas, mendemonstrasikan keunggulan kontrol internal (*Wow Factor*).
+
+> **[01:40 - 02:00] Penarikan Batch & Demo Proteksi Sistem (Kasus Negatif):**  
+> *"Terima kasih Amelia. Cabai curah 1.000 kg tadi kini masuk ke meja pemilahan mutu. Di sinilah letak keunggulan utama arsitektur kami, yaitu penegakan hukum fisika **Kekekalan Massa (Mass Balance)**.  
+> Perhatikan: jika petugas tidak sengaja atau sengaja menginput hasil: Grade A 700 kg, Grade B 200 kg, dan Afkir 90 kg—total hanya 990 kg, ada 10 kg yang hilang..."*  
+> *(Aksi Layar: Input 700, 200, 90 &rarr; Tunjukkan banner merah selisih 10 kg dan tombol posting terkunci)*
+
+> **[02:00 - 02:25] Reaksi Sistem & Eksekusi Valid:**  
+> *"Sistem secara mutlak **menolak** dan mengunci tombol posting! Terjadi pelanggaran `MASS_BALANCE_VIOLATION`. Tidak boleh ada 1 gram pun susut liar yang tidak dipertanggungjawabkan.  
+> Sekarang kita masukkan angka riil: Afkir 100 kg sehingga total tepat 1.000 kg (selisih pas 0 kg). Banner berubah hijau, Quality Check diverifikasi, dan kita klik **Simpan & Kunci Batch FIFO**."*  
+> *(Aksi Layar: Ubah afkir ke 100 kg &rarr; Banner hijau 'Mass Balance Sesuai 0 kg' &rarr; Klik Posting)*
+
+> **[02:25 - 02:40] Aturan Finansial Nol Afkir & Estafet:**  
+> *"Sesuai aturan bisnis SRS, komoditas afkir/rusak dikunci pada harga **Rp 0** dan dicatat sebagai limbah susut, melindungi kas koperasi dari pembengkakan biaya. Selanjutnya, rekan saya **Salsabilla** akan mendistribusikan produk siap jual ini ke pasar komersial."*  
+> *(Aksi Layar: Klik 'Keluar' & klik tombol cepat peran **Penjualan**)*
 
 ---
 
-### BABAK 5: Pesanan Penjualan & Penerbitan Surat Jalan
-* **Aktor / Login:** Bagian Penjualan (`penjualan` / `password123`)
-* **Halaman:** `/sales/orders`
-* **Aksi Demo:**
-  1. Buat pesanan penjualan baru:
-     * Pelanggan: `Toko Sayur Segar Jaya` (Segmen Retail).
-     * Rincian: Cabai Grade A (700 kg @ Rp 45.000) dan Grade B (200 kg @ Rp 39.500).
-     * Total Transaksi: **Rp 39.400.000**.
-  2. Tunjukkan alokasi stok otomatis mengambil batch tertua (FIFO).
-  3. Konfirmasi Pesanan dan klik tombol **Surat Jalan**.
-  4. Tunjukkan modal / cetak Surat Jalan resmi yang memuat No. DO, daftar batch, dan jumlah kirim.
-* **Narasi ke Dosen:**
-  > *"Pada modul Sales, sistem mendukung harga berjenjang antar-segmen (retail vs horeka). Saat pesanan dibuat, sistem otomatis mereservasi stok dengan prinsip FIFO, memotong inventaris gudang, dan menerbitkan dokumen resmi Surat Jalan Delivery Order."*
+### BAGIAN 4: SALES ORDER, FIFO ROTATION & DELIVERY (02:40 – 03:40)
+* **Pembicara:** **Salsabilla Rahma Diena (H1D025101)**
+* **Tampilan Layar:** Modul Penjualan (`/sales/orders`)
+* **Gaya Penyampaian:** Dinamis, fokus pada strategi bisnis dan otomatisasi logistik.
+
+> **[02:40 - 03:00] Strategi Harga Bertingkat (Tiered Pricing):**  
+> *"Terima kasih Aufa. Sekarang barang jadi Grade A dan Grade B telah tersedia di gudang. Di modul Penjualan, sistem kami menerapkan **Customer Tiered Pricing**. Saat kami memilih pelanggan segmen Retail Lokal—Toko Sayur Segar Jaya—sistem otomatis mematok harga Grade A Rp 46.000/kg dan Grade B Rp 36.000/kg."*  
+> *(Aksi Layar: Pilih Customer Retail & input order 700 kg Grade A + 200 kg Grade B)*
+
+> **[03:00 - 03:20] Penegakan Alokasi Stok Tertua (FIFO) & Anti Stok Minus:**  
+> *"Total pesanan terhitung tepat Rp 39.400.000. Saat pesanan dikonfirmasi, sistem secara cerdas menjalankan aturan **FIFO (First-In, First-Out)**: mengambil stok dari batch yang tanggal panennya paling awal untuk mencegah pembusukan di gudang. Jika ada yang memesan melebihi stok fisik, sistem akan menolak secara mutlak."*  
+> *(Aksi Layar: Klik 'Konfirmasi Pesanan' & tunjukkan alokasi batch tertua)*
+
+> **[03:20 - 03:40] Eksekusi Pengiriman & Estafet:**  
+> *"Hanya dengan satu klik **Kirim Barang**, sistem memotong saldo kartu stok inventaris, menerbitkan **Surat Jalan resmi**, dan otomatis membentuk **Faktur Penjualan**. Terakhir, bagaimana transaksi ini bermuara pada keuntungan petani dan transparansi koperasi? Rekan saya **Mazsa** akan merangkumnya di modul Keuangan dan ESG."*  
+> *(Aksi Layar: Klik 'Kirim & Terbitkan Faktur' &rarr; Klik tombol cepat **Keuangan**)*
 
 ---
 
-### BABAK 6: Akuntansi Otomatis (Auto-Journaling) & Transparansi SHU
-* **Aktor / Login:** Bagian Keuangan (`keuangan` / `password123`)
-* **Halaman:** `/accounting`
-* **Aksi Demo:**
-  1. **Tab 1 (Buku Jurnal Umum):** Tunjukkan jurnal otomatis ganda (*double-entry*) yang tercipta dari penerimaan panen dan penjualan tanpa perlu input manual oleh akuntan.
-  2. **Tab 2 (Laba Rugi & Margin):** Tunjukkan Pendapatan Rp 39.400.000, HPP Rp 32.600.000, Laba Kotor **Rp 6.800.000 (Margin 17,26%)**.
-  3. **Tab 3 (Kalkulator SHU):**
-     * Klik tombol **Hitung Pembagian SHU Anggota**.
-     * Tunjukkan kartu alokasi AD/ART (Dana Cadangan 40%, Jasa Usaha 25%, Jasa Modal 20%, Sosial 15%) dan tabel distribusi keuntungan per petani anggota.
-* **Narasi ke Dosen:**
-  > *"Ini keunggulan integrasi finansial: **Auto-Journaling**. Petugas operasional di lapangan tidak perlu paham debet-kredit; setiap pergerakan barang otomatis membukukan jurnal akuntansi yang presisi. Di Tab 3, Sisa Hasil Usaha (SHU) dibagikan secara transparan dan proporsional berdasarkan kontribusi riil transaksi anggota sesuai AD/ART koperasi."*
+### BAGIAN 5: FINANCIAL INTEGRITY, TRACEABILITY & CLOSING (03:40 – 04:40)
+* **Pembicara:** **Mazsa Amelia Maranatha (H1D025103)**
+* **Tampilan Layar:** Modul Akuntansi & Laporan ESG (`/accounting` & `/reports/esg`)
+* **Gaya Penyampaian:** Meyakinkan, tajam, menyajikan data angka dan kesimpulan yang kuat.
+
+> **[03:40 - 04:00] Integrasi Jurnal Otomatis & Margin Transparan:**  
+> *"Terima kasih Salsabilla. Di modul Akuntansi, tidak ada lagi staf yang menjurnal manual. Dari transaksi tadi, sistem secara otomatis membukukan jurnal berpasangan seimbang: Persediaan pada Hutang Anggota sebesar Rp 32.600.000.  
+> Pada Laporan Margin, koperasi secara transparan melihat selisih kotor operasional sebesar **Rp 6.800.000 atau 17,26%**."*  
+> *(Aksi Layar: Buka tab Jurnal & Laporan Margin)*
+
+> **[04:00 - 04:20] Ketertelusuran Rantai Pasok (Traceability) & Bukti Uji Otomatis:**  
+> *"Kekuatan terbesar sistem ini adalah **End-to-End Traceability**. Hanya dengan memasukkan nomor faktur retail tadi, sistem langsung merender pohon silsilah: dari meja makan konsumen, terlacak ke pabrik sortasi, hingga ke identitas Pak Budi Santoso di lahan kebun asalnya!  
+> Seluruh keandalan ini bukan sekadar klaim tampilan. Kami telah memvalidasinya melalui **Automated E2E Testing Suite (16/16 PASS, 100%)** dengan kecepatan rata-rata API 23,8 milidetik."*  
+> *(Aksi Layar: Buka halaman Traceability & perlihatkan diagram rantai alur batch)*
+
+> **[04:20 - 04:40] Dampak ESG & Penutup:**  
+> *"Dan pada Dashboard ESG, koperasi dapat memantau rasio pupuk ramah lingkungan serta indeks susut pangan untuk mendukung target SDGs.  
+> Inilah Smart Farming ERP Core: solusi rantai pasok agribisnis yang adil bagi petani, efisien bagi koperasi, dan berkelanjutan bagi masa depan ketahanan pangan Indonesia. Terima kasih, kami siap untuk sesi diskusi dan tanya jawab."*  
+> *(Semua anggota tersenyum, mengangguk sopan ke arah dosen, dan siap menjawab pertanyaan).*
 
 ---
 
-### BABAK 7: Laporan Eksekutif, ESG, & Ketertelusuran Pangan (SDGs)
-* **Aktor / Login:** Pengurus Koperasi (`pengurus` / `password123`)
-* **Halaman:** `/reports/esg`
-* **Aksi Demo:**
-  1. Tunjukkan Dashboard ESG 3 Pilar:
-     * **Pilar Environmental:** Rasio pupuk organik vs kimia, persentase susut panen (*food loss ratio*).
-     * **Pilar Social:** Keadilan harga petani (*farmer share margin*), ketepatan pembayaran.
-     * **Pilar Governance:** Ketertelusuran batch 100% dan transparansi tata kelola.
-  2. **Fitur Traceability Check:** Masukkan kode batch panen (`BATCH-20261118-001`), klik lacak → Tunjukkan riwayat lengkap: Petani asal, tanggal panen, hasil sortasi, hingga nomor Surat Jalan pengiriman ke konsumen.
-* **Narasi Penutup ke Dosen:**
-  > *"Terakhir, sebagai wujud **Sustainable Operations Management**, pimpinan koperasi dapat memantau indikator ESG dan SDGs (Zero Hunger & Responsible Consumption). Melalui fitur Traceability, jika konsumen pasar modern mengklaim ada komoditas cacat, koperasi dapat melacaknya kembali 100% hingga ke petak lahan petani asalnya dalam hitungan detik."*
+### 📋 LEMBAR PERSIAPAN CEPAT (*CHEAT SHEET*) UNTUK SETIAP ANGGOTA
+
+| Anggota | Kalimat Kunci yang Wajib Diucapkan | Kata Kunci Estafet ke Anggota Selanjutnya |
+| :--- | :--- | :--- |
+| **Pancar** | *"Single Source of Truth, memutus rantai tengkulak, 6 peran operasional terintegrasi."* | *"Rekan saya Amelia akan mendemonstrasikannya pada modul Penerimaan."* |
+| **Amelia** | *"Nomor Batch Unik paspor digital, Struk Bukti Timbang Thermal 58mm dengan QR Code."* | *"Rekan saya Aufa akan memperlihatkan benteng pertahanan mutu di bagian Sortasi."* |
+| **Aufa** | *"Hukum Mass Balance, deviasi selisih 0 kg, Zero-Value Afkir Rp 0 menolak susut liar."* | *"Rekan saya Salsabilla akan mendistribusikan produk siap jual ini ke pasar komersial."* |
+| **Salsabilla** | *"Customer Tiered Pricing 3 segmen, rotasi stok tertua FIFO, Surat Jalan DO otomatis."* | *"Rekan saya Mazsa akan merangkumnya di modul Keuangan dan ESG."* |
+| **Mazsa** | *"Auto-journal seimbang, margin Rp 6,8 Jt (17,26%), traceability end-to-end, 16/16 Automated E2E PASS."* | *"Terima kasih, kami siap untuk sesi diskusi dan tanya jawab."* |
 
 ---
 
-## 💡 TIPS MENGHADAPI PERTANYAAN KRITIS DOSEN
-
-| Pertanyaan Dosen | Kunci Jawaban Singkat & Berbobot |
-| :--- | :--- |
-| *"Apa bedanya sistem ini dengan pencatatan Excel biasa?"* | **Excel tidak memiliki *Process Integration* dan *Enforced Controls*.** Di Excel, orang bisa salah ketik tanpa validasi, data antar-bagian bisa beda versi (*multiple versions of truth*), dan tidak ada pembatasan hak akses (*RBAC*) serta jejak audit otomatis. |
-| *"Mengapa memilih metode FIFO daripada LIFO/Average?"* | **Karakteristik komoditas pertanian adalah *perishable* (mudah susut/rusak).** Barang yang masuk lebih awal harus keluar lebih awal agar tidak membusuk di gudang, meminimalkan kerugian *spoilage*, dan menjaga kesegaran bagi konsumen. |
-| *"Bagaimana sistem menjamin keadilan bagi petani kecil?"* | Melalui **standarisasi mutu grading bertingkat** (Grade A dihargai lebih tinggi secara objektif, bukan taksiran sepihak tengkulak) dan **pembagian SHU berbasis transaksi nyata** yang tercatat otomatis di sistem. |
+### ⚠️ TIPS MENGATASI SITUASI DARURAT SAAT PRESENTASI:
+1. **Jika Dosen Memotong ("Waktu tinggal 1 menit lagi!"):**
+   * Langsung loncat ke bagian **Aufa (Mass Balance error 0 kg)** dan **Mazsa (Traceability diagram)**. Dua fitur ini adalah bukti paling konkret bahwa ERP Anda berfungsi nyata.
+2. **Jika Koneksi / Layar Sempat Lag:**
+   * Pembicara jangan berhenti bicara. Lanjutkan narasi teori dan masalah bisnis yang diselesaikan sambil menunggu layar berpindah.
+3. **Jika Dosen Menanyakan Soal Pengujian:**
+   * Tunjukkan file Excel [Laporan_Automated_E2E_Testing_ERP_Smart_Farming.xlsx](file:///d:/Organize/Projects/smart-farming-erp-core/doc/Laporan_Automated_E2E_Testing_ERP_Smart_Farming.xlsx) dan jelaskan bahwa sistem telah lulus 16 skenario integrasi E2E secara otomatis dalam 0,38 detik.
