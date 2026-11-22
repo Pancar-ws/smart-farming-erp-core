@@ -7,6 +7,16 @@ import FormField from '../../components/FormField'
 import { DEMO_ACCOUNTS, ROLE_META } from '../../config/roles'
 import { useAuth } from '../../hooks/useAuth'
 
+// 6 Peran Utama Operasional Koperasi sesuai URS Dokumen Bab 2.3
+const PRIMARY_ROLE_USERNAMES = [
+  'admin_keanggotaan',
+  'penerimaan',
+  'sortasi',
+  'penjualan',
+  'keuangan',
+  'pengurus',
+]
+
 export default function LoginPage() {
   const { isAuthenticated, login } = useAuth()
   const navigate = useNavigate()
@@ -16,6 +26,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  const primaryAccounts = DEMO_ACCOUNTS.filter((acc) =>
+    PRIMARY_ROLE_USERNAMES.includes(acc.username)
+  )
+  const secondaryAccounts = DEMO_ACCOUNTS.filter(
+    (acc) => !PRIMARY_ROLE_USERNAMES.includes(acc.username)
+  )
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />
@@ -164,18 +181,51 @@ export default function LoginPage() {
             </div>
 
             <div className="demo-accounts-grid">
-              {DEMO_ACCOUNTS.map((acc) => (
+              {primaryAccounts.map((acc) => (
                 <button
                   key={acc.username}
                   type="button"
                   className="demo-chip"
                   onClick={() => handleQuickFill(acc)}
+                  title={`${ROLE_META[acc.role]?.label} (${acc.username})`}
                 >
                   <span className="demo-chip-role">{ROLE_META[acc.role]?.shortLabel}</span>
                   <span className="demo-chip-user">{acc.username}</span>
                 </button>
               ))}
             </div>
+
+            <details style={{ marginTop: '12px', fontSize: '11.5px', color: 'var(--text-muted)' }}>
+              <summary style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Peran sistem lainnya (Superadmin, Gudang, Anggota)
+              </summary>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '6px',
+                  marginTop: '8px',
+                }}
+              >
+                {secondaryAccounts.map((acc) => (
+                  <button
+                    key={acc.username}
+                    type="button"
+                    className="demo-chip"
+                    style={{ opacity: 0.85, padding: '4px 6px' }}
+                    onClick={() => handleQuickFill(acc)}
+                    title={`${ROLE_META[acc.role]?.label} (${acc.username})`}
+                  >
+                    <span className="demo-chip-role" style={{ fontSize: '10.5px' }}>
+                      {ROLE_META[acc.role]?.shortLabel}
+                    </span>
+                    <span className="demo-chip-user" style={{ fontSize: '10px' }}>
+                      {acc.username}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </details>
           </div>
         </div>
       </div>
